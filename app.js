@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/api', router);
-// api.get('/healthcheck', require('./healthcheck'));
+api.get('/healthcheck', require('./healthcheck'));
 
 crons(postgres);
 
