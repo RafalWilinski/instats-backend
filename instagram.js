@@ -7,18 +7,17 @@ const Promise = require('bluebird');
 const defaultFetchCount = 1000;
 
 const http = axios({
-  baseURL: config.instagram_base_url
 });
 
 const generateSignature = (endpoint, params) => {
-  let query = endpoint;
+  var query = endpoint;
   const ordered = {};
 
   Object.keys(params).sort().forEach((key) => {
     ordered[key] = params[key];
   });
 
-  for (let param in ordered) {
+  for (var param in ordered) {
     query += '|' + param + '=' + ordered[param];
   }
   return crypto.createHmac("sha256", config.instagram_client_secret).update(query).digest("hex");
@@ -26,16 +25,16 @@ const generateSignature = (endpoint, params) => {
 
 const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const path = `/users/${instagramId}/followed-by`;
-  const sig = generateSignature(path, {
+  const sig = generateSignature(`/users/${instagramId}/followed-by`, {
     access_token,
     count: defaultFetchCount
   });
 
-  http.get('/users/self/', {
+  axios.get(`${config.instagram_base_url}${path}`, {
     params: {
       access_token,
-      sig,
-      count: defaultFetchCount
+      count: defaultFetchCount,
+      sig
     }
   }).then((payload) => {
     logger.info('fetchFollowers succeeded', {
@@ -49,7 +48,7 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     });
 
     if (payload.data.meta.code === 200) {
-
+      // TODO
     } else {
       logger.warn('[fetchFollowers] Instagram API returned non-200 status code', {
         access_token,
@@ -63,7 +62,8 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
 
   }).catch((error) => {
     logger.error('Failed to fetch instagram followers', {
-      error,
+      data: error.data,
+      status: error.status,
       sig,
       access_token,
       instagramId

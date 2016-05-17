@@ -40,7 +40,7 @@ const log = new (winston.Logger)({
       silent: false,
       colorize: true,
       timestamp: true,
-      maxsize: 40000,
+      maxsize: 10000000,
       maxFiles: 10,
       json: false
     })

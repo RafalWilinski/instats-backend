@@ -1,7 +1,10 @@
 const CronJob = require('cron').CronJob;
+const Promise = require('bluebird');
 const moment = require('moment');
 const config = require('./config.json');
 const logger = require('./log');
+
+const instagram = require('./instagram');
 
 const startCrons = (postgres) => {
   normalUsersCron(postgres);
@@ -13,7 +16,7 @@ const normalUsersCron = (postgres) => {
   new CronJob(config.normalUserCronPattern, () => {
     logger.info('Starting normalUsersCron');
 
-    const users = fetchUsers(postgres, false);
+    fetchUsersAndFollows(postgres, false);
 
   }, () => {
     logger.info('normalUsersCron job stopped');
@@ -24,11 +27,20 @@ const premiumUsersCron = (postgres) => {
   new CronJob(config.premiumUserCronPattern, () => {
     logger.info('Starting premiumUsersCron');
 
-    const users = fetchUsers(postgres, true);
+    fetchUsersAndFollows(postgres, true);
 
   }, () => {
     logger.info('premiumUsersCron job stopped');
   }, config.cronAutoStart);
+};
+
+const fetchUsersAndFollows = (postgres, isPremium) => {
+  fetchUsers(postgres, isPremium).then((users) => {
+    users.forEach((user) => {
+      instagram.fetchFollowers(user.id, user.instagram_id, user.access_token);
+      instagram.fetchFollowings(user.id, user.instagram_id, user.access_token);
+    });
+  });
 };
 
 const deleteUsersCron = (postgres) => {
@@ -41,7 +53,7 @@ const deleteUsersCron = (postgres) => {
   }, config.cronAutoStart);
 };
 
-const fetchUsers = (postgres, premium) => {
+const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
   postgres
       .select('*')
       .from('users')
@@ -49,12 +61,15 @@ const fetchUsers = (postgres, premium) => {
         is_premium: false
       })
       .then((users) => {
-        return users.filter((user) => user.is_premium === premium);
+        console.log(users);
+        return resolve(users.filter((user) => user.is_premium === premium));
       })
       .catch((err) => {
         logger.error('Failed to fetch normal users during cron', { err });
+        return reject();
       });
-};
+});
+
 
 const deleteOldData = (postgres) => {
   postgres('followers_arrays')
