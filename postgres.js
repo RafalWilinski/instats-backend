@@ -1,4 +1,5 @@
 const config = require('./config.json');
+const winston = require('winston');
 
 const postgres = require('knex')({
   client: 'pg',
@@ -7,7 +8,8 @@ const postgres = require('knex')({
   pool: {
     min: 2,
     max: 5
-  }
+  },
+  debug: config.knexDebug
 });
 
 module.exports = postgres;
