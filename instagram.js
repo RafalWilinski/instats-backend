@@ -1,8 +1,9 @@
 const axios = require('axios');
 const crypto = require('crypto');
+const Promise = require('bluebird');
+const postgres = require('./postgres');
 const config = require('./config.json');
 const logger = require('./log');
-const Promise = require('bluebird');
 
 const defaultFetchCount = 1000;
 
@@ -23,6 +24,84 @@ const generateSignature = (endpoint, params) => {
   return crypto.createHmac("sha256", config.instagram_client_secret).update(query).digest("hex");
 };
 
+const getJsonFromUrlParams = (query) => {
+  const result = {};
+  query = query.split('?')[1];
+  query.split('&').forEach((part) => {
+    var item = part.split("=");
+    result[item[0]] = decodeURIComponent(item[1]);
+  });
+
+  return result;
+};
+
+const modifyPaginationUrl = (fullUrl, apiPath) => {
+  const urlParamsAsJson = getJsonFromUrlParams(fullUrl);
+  delete urlParamsAsJson['sig'];
+
+  const signature = generateSignature(apiPath, urlParamsAsJson);
+  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + '&cursor=' + urlParamsAsJson.cursor;
+
+  logger.info('Pagination url generated', { fullUrl, newUrl, signature });
+  return newUrl;
+};
+
+const jsonToParams = (data) => Object.keys(data).map((k) => {
+  return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+}).join('&');
+
+const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise((resolve, reject) => {
+  axios.get(fullUrl)
+      .then((payload) => {
+        if (payload.data.meta.code === 200) {
+
+          if (payload.data.hasOwnProperty('pagination') &&
+              payload.data.pagination.hasOwnProperty('next_url')) {
+
+            const paginationUrl = modifyPaginationUrl(payload.data.pagination.next_url, path);
+            logger.info('Fetching paginated data', {
+              paginationUrl,
+              fullUrl,
+              path
+            });
+
+            return fetchPaginatedData(paginationUrl, path, [...accumulator, payload.data.data]);
+
+          } else {
+            logger.info('Pagination end reached', {
+              array: [...accumulator, payload.data.data],
+              path,
+              dbUserId
+            });
+            return resolve(
+                [...accumulator, payload.data.data]
+            );
+          }
+
+        } else {
+          logger.warn('Instagram API returned non-200 status code (paginated)', {
+            fullUrl,
+            path,
+            status: payload.status,
+            data: payload.data,
+            headers: payload.headers
+          });
+
+          return reject();
+        }
+      })
+      .catch((error) => {
+        logger.warn('Instagram API error (paginated)', {
+          data: error.data,
+          status: error.status,
+          sig,
+          access_token,
+          instagramId
+        });
+        return reject();
+      });
+});
+
 const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const path = `/users/${instagramId}/followed-by`;
   const sig = generateSignature(`/users/${instagramId}/followed-by`, {
@@ -30,45 +109,19 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     count: defaultFetchCount
   });
 
-  axios.get(`${config.instagram_base_url}${path}`, {
-    params: {
-      access_token,
-      count: defaultFetchCount,
-      sig
-    }
-  }).then((payload) => {
-    logger.info('fetchFollowers succeeded', {
-      access_token,
-      sig,
-      instagramId,
-      id,
-      status: payload.status,
-      data: payload.data,
-      headers: payload.headers
-    });
+  const fullUrl = `${config.instagram_base_url}${path}?${jsonToParams({
+    access_token,
+    count: defaultFetchCount,
+    sig
+  })}`;
 
-    if (payload.data.meta.code === 200) {
-      // TODO
-    } else {
-      logger.warn('[fetchFollowers] Instagram API returned non-200 status code', {
-        access_token,
-        sig,
-        status: payload.status,
-        data: payload.data,
-        headers: payload.headers
-      });
-      return reject();
-    }
-
-  }).catch((error) => {
-    logger.error('Failed to fetch instagram followers', {
-      data: error.data,
-      status: error.status,
-      sig,
-      access_token,
-      instagramId
-    });
-    return reject(error);
+  fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
+    postgres
+        .se
+  }).catch((err) => {
+    logger.error('failed to fetch followers', {
+      id, instagramId, fullUrl, path, err
+    })
   });
 });
 
