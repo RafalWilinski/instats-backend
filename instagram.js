@@ -116,17 +116,36 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
   })}`;
 
   fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
-    postgres
-        .se
+    return resolve(followersArray);
   }).catch((err) => {
     logger.error('failed to fetch followers', {
       id, instagramId, fullUrl, path, err
     })
+    return reject();
   });
 });
 
 const fetchFollowings = (id, instagramId, accessToken) => new Promise((resolve, reject) => {
+  const path = `/users/${instagramId}/follows`;
+  const sig = generateSignature(`/users/${instagramId}/follows`, {
+    access_token,
+    count: defaultFetchCount
+  });
 
+  const fullUrl = `${config.instagram_base_url}${path}?${jsonToParams({
+    access_token,
+    count: defaultFetchCount,
+    sig
+  })}`;
+
+  fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
+    return resolve(followsArray);
+  }).catch((err) => {
+    logger.error('failed to fetch followers', {
+      id, instagramId, fullUrl, path, err
+    });
+    return reject();
+  });
 });
 
 const fetchProfile = (instagramId, accessToken) => new Promise((resolve, reject) => {
