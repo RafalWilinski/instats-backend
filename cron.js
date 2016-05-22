@@ -1,7 +1,7 @@
 const CronJob = require('cron').CronJob;
 const Promise = require('bluebird');
 const moment = require('moment');
-const config = require('./config.json');
+const config = require('./config.js');
 const logger = require('./log');
 
 const instagram = require('./instagram');
@@ -13,7 +13,7 @@ const startCrons = (postgres) => {
 };
 
 const normalUsersCron = (postgres) => {
-  new CronJob(config.normalUserCronPattern, () => {
+  new CronJob(config('normal_users_cron_pattern'), () => {
     logger.info('Starting normalUsersCron');
 
     fetchUsersAndFollows(postgres, false);
@@ -24,7 +24,7 @@ const normalUsersCron = (postgres) => {
 };
 
 const premiumUsersCron = (postgres) => {
-  new CronJob(config.premiumUserCronPattern, () => {
+  new CronJob(config('premium_users_cron_pattern'), () => {
     logger.info('Starting premiumUsersCron');
 
     fetchUsersAndFollows(postgres, true);
@@ -44,7 +44,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
 };
 
 const deleteUsersCron = (postgres) => {
-  new CronJob(config.deleteCronPattern, () => {
+  new CronJob(config('delete_cron_pattern'), () => {
     logger.info('Starting deleteUsersCron');
 
     deleteOldData(postgres);

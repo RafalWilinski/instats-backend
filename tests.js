@@ -1,17 +1,33 @@
 /* global it, describe, before, post, get */
 
-const config = require('./config.json');
+const config = require('./config.js');
 const request = require('supertest');
+const fs = require('fs');
 const expect = require('chai').expect;
 const postgres = require('./postgres');
 const app = require('./app');
 
 const testInstagramId = config.instagram_test_id;
 
+describe('Config tests', () => {
+  before((done) => {
+    process.env.TEST_VARIABLE = 'abc';
+    done();
+  });
+
+  it('Gets variable from config.json', () => {
+    expect(config('knex_debug')).to.be.equal(true);
+  });
+
+  it('Gets variable from environment if config is not available', () => {
+    expect(config('test_variable')).to.be.equal('abc');
+  });
+});
+
 describe('API Integration Tests', () => {
 
   before((done) => {
-
+    done();
   });
 
   it('Healthcheck responds OK status', () => {
