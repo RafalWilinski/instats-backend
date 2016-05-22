@@ -2,7 +2,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const Promise = require('bluebird');
 const postgres = require('./postgres');
-const config = require('./config.json');
+const config = require('./config.js');
 const logger = require('./log');
 
 const defaultFetchCount = 1000;
@@ -21,7 +21,7 @@ const generateSignature = (endpoint, params) => {
   for (var param in ordered) {
     query += '|' + param + '=' + ordered[param];
   }
-  return crypto.createHmac("sha256", config.instagram_client_secret).update(query).digest("hex");
+  return crypto.createHmac("sha256", config('instagram_client_secret')).update(query).digest("hex");
 };
 
 const getJsonFromUrlParams = (query) => {
@@ -109,7 +109,7 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     count: defaultFetchCount
   });
 
-  const fullUrl = `${config.instagram_base_url}${path}?${jsonToParams({
+  const fullUrl = `${config('instagram_base_url')}${path}?${jsonToParams({
     access_token,
     count: defaultFetchCount,
     sig
@@ -125,14 +125,14 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
   });
 });
 
-const fetchFollowings = (id, instagramId, accessToken) => new Promise((resolve, reject) => {
+const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const path = `/users/${instagramId}/follows`;
   const sig = generateSignature(`/users/${instagramId}/follows`, {
     access_token,
     count: defaultFetchCount
   });
 
-  const fullUrl = `${config.instagram_base_url}${path}?${jsonToParams({
+  const fullUrl = `${config('instagram_base_url')}${path}?${jsonToParams({
     access_token,
     count: defaultFetchCount,
     sig
@@ -156,34 +156,36 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
   const sig = generateSignature('/users/self', {
     access_token
   });
+  const fullUrl = `${config('instagram_base_url')}/users/self/?${jsonToParams({
+    access_token,
+    sig
+  })}`;
+  console.log(fullUrl);
 
-  http.get('/users/self/', {
-    params: {
-      access_token,
-      sig
-    }
-  }).then((payload) => {
-    logger.info('Fetch user stats succeeded', {
-      access_token,
-      sig,
-      status: payload.status,
-      data: payload.data,
-      headers: payload.headers
-    });
+  return axios.get(fullUrl)
+      .then((payload) => {
+        logger.info('Fetch user stats succeeded', {
+          access_token,
+          sig,
+          status: payload.status,
+          data: payload.data,
+          headers: payload.headers
+        });
 
-    if (payload.data.meta.code === 200) {
-      return resolve(payload.data.data);
-    } else {
-      logger.warn('[fetchStats] Instagram API returned non-200 status code', {
-        access_token,
-        sig,
-        status: payload.status,
-        data: payload.data,
-        headers: payload.headers
-      });
-      return reject();
-    }
-  }).catch((error) => {
+        if (payload.data.meta.code === 200) {
+          console.log('xD');
+          return resolve(payload.data);
+        } else {
+          logger.warn('[fetchStats] Instagram API returned non-200 status code', {
+            access_token,
+            sig,
+            status: payload.status,
+            data: payload.data,
+            headers: payload.headers
+          });
+          return reject();
+        }
+      }).catch((error) => {
     logger.error('Failed to fetch instagram user stats', {
       error,
       sig,
