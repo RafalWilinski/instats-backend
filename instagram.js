@@ -160,7 +160,6 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
     access_token,
     sig
   })}`;
-  console.log(fullUrl);
 
   return axios.get(fullUrl)
       .then((payload) => {
@@ -173,7 +172,6 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
         });
 
         if (payload.data.meta.code === 200) {
-          console.log('xD');
           return resolve(payload.data);
         } else {
           logger.warn('[fetchStats] Instagram API returned non-200 status code', {

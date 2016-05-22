@@ -1,3 +1,4 @@
+const dotenv = require('dotenv').config();
 const newrelic = require('newrelic');
 const express = require('express');
 const postgres = require('./postgres');

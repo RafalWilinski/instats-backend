@@ -1,5 +1,6 @@
 /* global it, describe, before, post, get */
 
+const dotenv = require('dotenv').config();
 const request = require('supertest');
 const fs = require('fs');
 const expect = require('chai').expect;
@@ -14,10 +15,6 @@ const testInstagramAccessToken = config('instagram_test_access_token');
 describe('Config tests', () => {
   before(() => {
     process.env.TEST_VARIABLE = 'abc';
-  });
-
-  it('Gets variable from config.json', () => {
-    expect(config('knex_debug')).to.be.equal(true);
   });
 
   it('Gets variable from environment if config is not available', () => {
