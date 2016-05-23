@@ -23,16 +23,7 @@ describe('Config tests', () => {
   });
 });
 
-describe('API Integration Tests', () => {
-
-  before((done) => {
-    done();
-  });
-
-  it('Healthcheck responds OK status', () => {
-    request(app).get('/healthcheck');
-  });
-
+describe('Instagram API Tests', () => {
   it('Fetches stats using instagram API', (done) => {
     instagramApi.fetchStats(testInstagramAccessToken)
         .then((data) => {
@@ -65,12 +56,41 @@ describe('API Integration Tests', () => {
           throw new Error();
         });
   });
+});
 
-  it('Fetches smart profile', () => {
+describe('API Integration Tests', () => {
+
+  before((done) => {
+    done();
+  });
+
+  it('Healthcheck responds OK status', (done) => {
+    request(app).get('/healthcheck')
+        .then(() => {
+          done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
+  });
+
+  it('Fetches smart profile', (done) => {
 
   });
 
-  it('Promotes user', () => {
+  it('Fetches followers', (done) => {
+
+  });
+
+  it('Fetches follows', (done) => {
+
+  });
+
+  it('Fetches stats', (done) => {
+
+  });
+
+  it('Promotes user', (done) => {
 
   });
 
