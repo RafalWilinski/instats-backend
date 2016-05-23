@@ -9,6 +9,7 @@ const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
 
+const testId = 1;
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
 
@@ -43,12 +44,26 @@ describe('API Integration Tests', () => {
         });
   });
 
-  it('Fetches followers', () => {
-
+  it('Fetches followers', (done) => {
+    instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
+        .then((data) => {
+          expect(data).to.be.an('array');
+          done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
   });
 
-  it('Fetches follows', () => {
-
+  it('Fetches follows', (done) => {
+    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
+        .then((data) => {
+          expect(data).to.be.an('array');
+          done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
   });
 
   it('Fetches smart profile', () => {
