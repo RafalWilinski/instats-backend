@@ -9,7 +9,7 @@ const postgres = require('knex')({
     min: 2,
     max: 5
   },
-  debug: config.knexDebug
+  debug: config('knex_debug')
 });
 
 module.exports = postgres;

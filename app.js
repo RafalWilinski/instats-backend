@@ -1,4 +1,5 @@
 const dotenv = require('dotenv').config();
+require('@risingstack/trace');
 const newrelic = require('newrelic');
 const express = require('express');
 const postgres = require('./postgres');

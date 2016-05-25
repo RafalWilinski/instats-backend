@@ -37,8 +37,22 @@ const premiumUsersCron = (postgres) => {
 const fetchUsersAndFollows = (postgres, isPremium) => {
   fetchUsers(postgres, isPremium).then((users) => {
     users.forEach((user) => {
-      instagram.fetchFollowers(user.id, user.instagram_id, user.access_token);
-      instagram.fetchFollowings(user.id, user.instagram_id, user.access_token);
+      instagram.fetchFollowers(user.id, user.instagram_id, user.access_token)
+          .then((followersArray) => {
+            insertFollowersArray(followersArray, postgres);
+            insertSmartProfiles(followersArray, postgres);
+          })
+          .catch(() => {
+            log.error('failed to fetch follows');
+          });
+      instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
+          .then((followsArray) => {
+            insertFollowsArray(followsArray, postgres);
+            insertSmartProfiles(followsArray, postgres);
+          })
+          .catch(() => {
+            log.error('failed to fetch follows');
+          });
     });
   });
 };
@@ -58,7 +72,7 @@ const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
       .select('*')
       .from('users')
       .where({
-        is_premium: false
+        is_premium: premium
       })
       .then((users) => {
         console.log(users);
@@ -91,6 +105,23 @@ const deleteOldData = (postgres) => {
       .catch((err) => {
         logger.error('Failed to delete rows during cron', { err });
       });
+};
+
+const insertSmartProfiles = (usersArray, postgres) => {
+  usersArray.forEach((user) => {
+    postgres('small_profiles')
+        .insert({
+          name: user.username,
+          instagram_id: user.id,
+          picture_url: user.profile_picture
+        })
+        .then((data) => {
+          logger.info('Small profile inserted', data);
+        })
+        .catch((err) => {
+          logger.warn('Failed to enter small profile', err);
+        });
+  });
 };
 
 module.exports = startCrons;

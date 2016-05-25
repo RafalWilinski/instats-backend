@@ -8,10 +8,12 @@ const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
+const logger = require('./log');
 
 const testId = 1;
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
+const testInstagramUsername = config('instagram_test_username');
 
 describe('Config tests', () => {
   before(() => {
@@ -56,44 +58,57 @@ describe('Instagram API Tests', () => {
           throw new Error();
         });
   });
-});
 
-describe('API Integration Tests', () => {
-
-  before((done) => {
-    done();
-  });
-
-  it('Healthcheck responds OK status', (done) => {
-    request(app).get('/healthcheck')
-        .then(() => {
+  it('Fetches other user profile', (done) => {
+    instagramApi.fetchProfile(testInstagramId, testInstagramAccessToken)
+        .then((data) => {
+          expect(data.meta.code).to.be.equal(200);
+          expect(data.data.username).to.be.equal(testInstagramUsername);
           done();
         })
         .catch(() => {
           throw new Error();
         });
   });
+});
+
+describe('API Integration Tests', () => {
+  it('Healthcheck responds OK status', (done) => {
+    request(app)
+        .get('/healthcheck')
+        .expect(200)
+        .end((err) => {
+          if (err) throw new Error(err);
+          done();
+        })
+  });
 
   it('Fetches smart profile', (done) => {
-
+    const url = `/api/get_user_info?id=${testInstagramId}&access_token=${testInstagramAccessToken}`;
+    request(app)
+        .get(url)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body.data.username).to.be.equal(testInstagramUsername);
+          done();
+        });
   });
 
   it('Fetches followers', (done) => {
-
+    done();
   });
 
   it('Fetches follows', (done) => {
-
+    done();
   });
 
   it('Fetches stats', (done) => {
-
+    done();
   });
 
   it('Promotes user', (done) => {
-
+    done();
   });
-
 });
 
 describe('Cron Integration Tests', () => {
@@ -120,7 +135,7 @@ describe('Cron Integration Tests', () => {
 
 describe('Unit Utils Tests', () => {
   it('Generates correct signature', () => {
-
+    
   });
 
   it('Creates appropriate pagination URL', () => {

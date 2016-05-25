@@ -7,9 +7,6 @@ const logger = require('./log');
 
 const defaultFetchCount = 1000;
 
-const http = axios({
-});
-
 const generateSignature = (endpoint, params) => {
   var query = endpoint;
   const ordered = {};
@@ -148,8 +145,46 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
   });
 });
 
-const fetchProfile = (instagramId, accessToken) => new Promise((resolve, reject) => {
+const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject) => {
+  const sig = generateSignature(`/users/${instagramId}`, {
+    access_token
+  });
+  const fullUrl = `${config('instagram_base_url')}/users/${instagramId}?${jsonToParams({
+    access_token,
+    sig
+  })}`;
 
+  return axios.get(fullUrl)
+      .then((payload) => {
+        logger.info('Fetch user stats succeeded', {
+          access_token,
+          sig,
+          status: payload.status,
+          data: payload.data
+        });
+
+        if (payload.data.meta.code === 200) {
+          return resolve(payload.data);
+        } else {
+          logger.warn('[fetchProfile] Instagram API returned non-200 status code', {
+            access_token,
+            sig,
+            status: payload.status,
+            data: payload.data,
+            headers: payload.headers
+          });
+          return reject();
+        }
+      })
+      .catch((error) => {
+        logger.error('Failed to fetch instagram user', {
+          error,
+          instagramId,
+          sig,
+          access_token
+        });
+        return reject();
+      });
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
