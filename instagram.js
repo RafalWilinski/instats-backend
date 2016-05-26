@@ -5,7 +5,7 @@ const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
 
-const defaultFetchCount = 1000;
+const defaultFetchCount = 25;
 
 const generateSignature = (endpoint, params) => {
   var query = endpoint;
@@ -37,7 +37,7 @@ const modifyPaginationUrl = (fullUrl, apiPath) => {
   delete urlParamsAsJson['sig'];
 
   const signature = generateSignature(apiPath, urlParamsAsJson);
-  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + '&cursor=' + urlParamsAsJson.cursor;
+  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
 
   logger.info('Pagination url generated', { fullUrl, newUrl, signature });
   return newUrl;
@@ -48,7 +48,7 @@ const jsonToParams = (data) => Object.keys(data).map((k) => {
 }).join('&');
 
 const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise((resolve, reject) => {
-  axios.get(fullUrl)
+  return axios.get(fullUrl)
       .then((payload) => {
         if (payload.data.meta.code === 200) {
 
@@ -62,17 +62,17 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
               path
             });
 
-            return fetchPaginatedData(paginationUrl, path, [...accumulator, payload.data.data]);
+            return resolve(fetchPaginatedData(paginationUrl, path, [...accumulator, ...payload.data.data], dbUserId));
 
           } else {
+            const array = [...accumulator, ...payload.data.data];
             logger.info('Pagination end reached', {
-              array: [...accumulator, payload.data.data],
+              array,
               path,
               dbUserId
             });
-            return resolve(
-                [...accumulator, payload.data.data]
-            );
+
+            return resolve(array);
           }
 
         } else {
@@ -89,11 +89,10 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
       })
       .catch((error) => {
         logger.warn('Instagram API error (paginated)', {
-          data: error.data,
-          status: error.status,
-          sig,
-          access_token,
-          instagramId
+          error,
+          fullUrl,
+          path,
+          dbUserId
         });
         return reject();
       });
@@ -112,12 +111,12 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     sig
   })}`;
 
-  fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
+  return fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
     return resolve(followersArray);
   }).catch((err) => {
     logger.error('failed to fetch followers', {
       id, instagramId, fullUrl, path, err
-    })
+    });
     return reject();
   });
 });

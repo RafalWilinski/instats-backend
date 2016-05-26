@@ -41,6 +41,7 @@ describe('Instagram API Tests', () => {
     instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
         .then((data) => {
           expect(data).to.be.an('array');
+          expect(data.length).to.be.greaterThan(50);
           done();
         })
         .catch(() => {
@@ -52,6 +53,7 @@ describe('Instagram API Tests', () => {
     instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
         .then((data) => {
           expect(data).to.be.an('array');
+          expect(data.length).to.be.greaterThan(50);
           done();
         })
         .catch(() => {
@@ -159,8 +161,33 @@ describe('Cron Integration Tests', () => {
         });
   });
 
-  it('Saves followers to DB', () => {
+  it('Saves followers to DB', (done) => {
 
+    const checkInsert = (originalData) => {
+      postgres('followers_arrays')
+          .select('*')
+          .where({
+            id: originalData[0].id
+          })
+          .then((data) => {
+            expect(data[0].id).to.be.equal(originalData[0].id);
+            done();
+          })
+          .catch((error) => {
+            throw new Error(error);
+          })
+    };
+
+    instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
+        .then((followersArray) => {
+          cron.insertArray(testId, followersArray, true, postgres)
+              .then((data) => {
+                checkInsert(data);
+              })
+              .catch((error) => {
+                throw new Error(error);
+              });
+        });
   });
 
   it('Saves follows to DB', () => {

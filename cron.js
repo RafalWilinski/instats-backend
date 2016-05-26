@@ -39,7 +39,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
     users.forEach((user) => {
       instagram.fetchFollowers(user.id, user.instagram_id, user.access_token)
           .then((followersArray) => {
-            insertFollowersArray(followersArray, postgres);
+            insertArray(user.id, followersArray, true, postgres);
             insertSmallProfiles(followersArray, postgres);
           })
           .catch(() => {
@@ -47,7 +47,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
           });
       instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
           .then((followsArray) => {
-            insertFollowsArray(followsArray, postgres);
+            insertArray(user.id, followsArray, false, postgres);
             insertSmallProfiles(followsArray, postgres);
           })
           .catch(() => {
@@ -107,6 +107,36 @@ const deleteOldData = (postgres) => {
       });
 };
 
+const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((resolve, reject) => {
+  const tableName = isFollowers ? 'followers_arrays' : 'followings_arrays';
+  const array = `{${usersArray.map((user) => user.id)}}`;
+  postgres(tableName)
+      .insert({
+        user_ref: userId,
+        timestamp: new Date().toUTCString(),
+        users_array: array
+      })
+      .returning('id')
+      .then((data) => {
+        logger.info('data inserted', {
+          tableName,
+          userId,
+          data
+        });
+
+        return resolve(data);
+      })
+      .catch((error) => {
+        logger.error('failed to insert data', {
+          error,
+          userId,
+          tableName
+        });
+
+        return reject();
+      });
+});
+
 const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reject) => {
   usersArray.forEach((user) => {
     postgres('small_profiles')
@@ -128,5 +158,6 @@ const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reje
 
 module.exports = {
   insertSmallProfiles,
+  insertArray,
   startCrons
 };

@@ -24,4 +24,8 @@ app.listen(process.env.PORT || 3000, () => {
   logger.info('Server started at ' + (process.env.PORT || 3000) + ' port');
 });
 
+process.on('uncaughtException', function (err) {
+  console.log(err);
+})
+
 module.exports = app;
