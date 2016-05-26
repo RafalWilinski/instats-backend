@@ -8,6 +8,7 @@ const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
+const cron = require('./cron');
 
 const testId = 4;
 const testInstagramId = config('instagram_test_id');
@@ -148,6 +149,16 @@ describe('API Integration Tests', () => {
 });
 
 describe('Cron Integration Tests', () => {
+  before((done) => {
+    postgres('small_profiles')
+        .where('instagram_id', '2')
+        .orWhere('instagram_id', '1')
+        .delete()
+        .then(() => {
+          done();
+        });
+  });
+
   it('Saves followers to DB', () => {
 
   });
@@ -164,7 +175,35 @@ describe('Cron Integration Tests', () => {
 
   });
 
-  it('Saves smart profile to DB', () => {
+  it('Saves smart profile to DB', (done) => {
+    cron.insertSmallProfiles([
+      {
+        id: 1,
+        username: 'user_a',
+        profile_picture: 'http://user_a.jpg'
+      }, {
+        id: 2,
+        username: 'user_b',
+        profile_picture: 'http://user_b.jpg'
+      }
+    ], postgres)
+        .then(() => {
+          postgres('small_profiles')
+              .select('*')
+              .where({
+                instagram_id: '2'
+              })
+              .then((users) => {
+                expect(users.length).to.be.equal(1);
+                done();
+              })
+              .catch((error) => {
+                throw new Error(error);
+              });
+        })
+        .catch(() => {
+          throw new Error();
+        });
 
   });
 });

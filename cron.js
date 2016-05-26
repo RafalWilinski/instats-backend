@@ -40,7 +40,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
       instagram.fetchFollowers(user.id, user.instagram_id, user.access_token)
           .then((followersArray) => {
             insertFollowersArray(followersArray, postgres);
-            insertSmartProfiles(followersArray, postgres);
+            insertSmallProfiles(followersArray, postgres);
           })
           .catch(() => {
             log.error('failed to fetch follows');
@@ -48,7 +48,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
       instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
           .then((followsArray) => {
             insertFollowsArray(followsArray, postgres);
-            insertSmartProfiles(followsArray, postgres);
+            insertSmallProfiles(followsArray, postgres);
           })
           .catch(() => {
             log.error('failed to fetch follows');
@@ -107,7 +107,7 @@ const deleteOldData = (postgres) => {
       });
 };
 
-const insertSmartProfiles = (usersArray, postgres) => {
+const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reject) => {
   usersArray.forEach((user) => {
     postgres('small_profiles')
         .insert({
@@ -117,11 +117,16 @@ const insertSmartProfiles = (usersArray, postgres) => {
         })
         .then((data) => {
           logger.info('Small profile inserted', data);
+          return resolve();
         })
         .catch((err) => {
           logger.warn('Failed to enter small profile', err);
+          return reject();
         });
   });
-};
+});
 
-module.exports = startCrons;
+module.exports = {
+  insertSmallProfiles,
+  startCrons
+};

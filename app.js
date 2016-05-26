@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/api', router);
 app.get('/healthcheck', require('./healthcheck'));
 
-crons(postgres);
+crons.startCrons(postgres);
 
 app.listen(process.env.PORT || 3000, () => {
   logger.info('Server started at ' + (process.env.PORT || 3000) + ' port');
