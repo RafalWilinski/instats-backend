@@ -263,5 +263,8 @@ module.exports = {
   fetchFollowings,
   fetchProfile,
   fetchStats,
-  exchangeToken
+  exchangeToken,
+  generateSignature,
+  getJsonFromUrlParams,
+  jsonToParams
 };

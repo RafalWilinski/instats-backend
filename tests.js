@@ -8,7 +8,6 @@ const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
-const logger = require('./log');
 
 const testId = 4;
 const testInstagramId = config('instagram_test_id');
@@ -171,15 +170,35 @@ describe('Cron Integration Tests', () => {
 });
 
 describe('Unit Utils Tests', () => {
-  it('Generates correct signature', () => {
-    
+  it('Generates correct signature', (done) => {
+    const expectedSignature = '648dccf1260a0bfa123fea3b1d88c1d8eb16bc9bc096543abead456587f54452';
+    const sig = instagramApi.generateSignature('/users/self', {
+      access_token: testInstagramAccessToken
+    });
+
+    expect(sig).to.be.equal(expectedSignature);
+    done();
   });
 
-  it('Creates appropriate pagination URL', () => {
 
+  it('Computes proper JSON from URL', (done) => {
+    const urlParams = "?id=123&message=ok";
+    const json = instagramApi.getJsonFromUrlParams(urlParams);
+
+    expect(json.message).to.be.equal('ok');
+
+    done();
   });
 
-  it('Computes proper JSON from URL', () => {
+  it('Computers proper params from JSON', (done) => {
+    const json = {
+      id: 123,
+      message: 'ok'
+    };
 
+    const params = instagramApi.jsonToParams(json);
+
+    expect(params).to.be.equal('id=123&message=ok');
+    done();
   });
 });
