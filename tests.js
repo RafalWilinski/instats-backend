@@ -133,7 +133,18 @@ describe('API Integration Tests', () => {
   });
 
   it('Promotes user', (done) => {
-    done();
+    const url = `/api/promote`;
+    request(app)
+        .post(url)
+        .send({
+          id: testId
+        })
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body.success).to.be.equal('ok');
+          done();
+        });
   });
 });
 
