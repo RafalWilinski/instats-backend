@@ -219,18 +219,49 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
           return reject();
         }
       }).catch((error) => {
-    logger.error('Failed to fetch instagram user stats', {
-      error,
-      sig,
-      access_token
-    });
-    return reject();
-  });
+        logger.error('Failed to fetch instagram user stats', {
+          error,
+          sig,
+          access_token
+        });
+        return reject();
+      });
 });
+
+const exchangeToken = (code) => new Promise((resolve, reject) => {
+  return axios.post(`${config('instagram_base_url')}/oauth/access_token/`)
+      .send({
+        client_id: config('instagram_client_id'),
+        client_secret: config('instagram_client_secret'),
+        grant_type: 'authorization_code',
+        redirect_url: config('instagram_callback_url'),
+        code
+      })
+      .then((payload) => {
+
+      })
+      .catch((error) => {
+
+      });
+});
+
+const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
+    postgres('users')
+        .select('*')
+        .where({
+          instagram_id: payload.body.user.id
+        })
+        .then((data) => {
+          if (data.length > 0) return resolve();
+          else return reject();
+        })
+        .catch((error) => reject())
+);
 
 module.exports = {
   fetchFollowers,
   fetchFollowings,
   fetchProfile,
-  fetchStats
+  fetchStats,
+  exchangeToken
 };

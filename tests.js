@@ -10,7 +10,7 @@ const app = require('./app');
 const instagramApi = require('./instagram');
 const logger = require('./log');
 
-const testId = 1;
+const testId = 4;
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
 const testInstagramUsername = config('instagram_test_username');
@@ -95,15 +95,41 @@ describe('API Integration Tests', () => {
   });
 
   it('Fetches followers', (done) => {
-    done();
+    const url = `/api/get_followings?id=${testId}`;
+    request(app)
+        .get(url)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body.result).to.an('array');
+          expect(data.body.result.length).to.be.greaterThan(50);
+          done();
+        });
   });
 
   it('Fetches follows', (done) => {
-    done();
+    const url = `/api/get_followers?id=${testId}`;
+    request(app)
+        .get(url)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body.result).to.an('array');
+          expect(data.body.result.length).to.be.greaterThan(50);
+          done();
+        });
   });
 
   it('Fetches stats', (done) => {
-    done();
+    const url = `/api/get_stats?access_token=${testInstagramAccessToken}`;
+    request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('object');
+          expect(data.body.meta.code).to.be.equal(200);
+          expect(data.body.data.id).to.be.equal(testInstagramId);
+          done();
+        });
   });
 
   it('Promotes user', (done) => {
