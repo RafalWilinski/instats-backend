@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "mocha tests.js --timeout 5000"
+    "test": "mocha --require blanket tests.js",
+    "coverage": "istanbul cover _mocha tests.js"
   },
   "engine": {
     "node": "6.0.0",
@@ -39,7 +40,10 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
+    "istanbul": "^0.4.3",
     "mocha": "^2.4.5",
+    "mocha-lcov-reporter": "^1.2.0",
     "supertest": "^1.2.0"
   }
 }

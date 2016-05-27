@@ -4,7 +4,6 @@ const dotenv = require('dotenv').config();
 const request = require('supertest');
 const fs = require('fs');
 const expect = require('chai').expect;
-const CronJob = require('cron').CronJob;
 const sinon = require('sinon');
 const config = require('./config.js');
 const postgres = require('./postgres');
@@ -85,6 +84,13 @@ describe('API Integration Tests', () => {
           if (err) throw new Error(err);
           done();
         })
+  });
+
+  it('Fails to fetch smart profile if access_token is not supplied', (done) => {
+    const url = `/api/get_user_info?id=${testInstagramId}`;
+    request(app)
+        .get(url)
+        .expect(400, done);
   });
 
   it('Fetches smart profile', (done) => {
