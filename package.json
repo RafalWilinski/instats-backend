@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "mocha --require blanket tests.js",
+    "test": "mocha tests.js",
     "coverage": "istanbul cover _mocha tests.js"
   },
   "engine": {
