@@ -5,7 +5,7 @@ const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
 
-const defaultFetchCount = 25;
+const defaultFetchCount = config('default_fetch_count');
 
 const generateSignature = (endpoint, params) => {
   var query = endpoint;

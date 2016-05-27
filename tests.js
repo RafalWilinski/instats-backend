@@ -162,15 +162,14 @@ describe('Cron Integration Tests', () => {
   });
 
   it('Saves followers to DB', (done) => {
-
     const checkInsert = (originalData) => {
       postgres('followers_arrays')
           .select('*')
           .where({
-            id: originalData[0].id
+            id: originalData[0]
           })
           .then((data) => {
-            expect(data[0].id).to.be.equal(originalData[0].id);
+            expect(data[0].id).to.be.equal(originalData[0]);
             done();
           })
           .catch((error) => {
@@ -191,7 +190,31 @@ describe('Cron Integration Tests', () => {
   });
 
   it('Saves follows to DB', () => {
+    const checkInsert = (originalData) => {
+      postgres('followings_arrays')
+          .select('*')
+          .where({
+            id: originalData[0]
+          })
+          .then((data) => {
+            expect(data[0].id).to.be.equal(originalData[0]);
+            done();
+          })
+          .catch((error) => {
+            throw new Error(error);
+          })
+    };
 
+    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
+        .then((followingsArrays) => {
+          cron.insertArray(testId, followingsArrays, true, postgres)
+              .then((data) => {
+                checkInsert(data);
+              })
+              .catch((error) => {
+                throw new Error(error);
+              });
+        });
   });
 
   it('Deletes followers and follows from DB', () => {
