@@ -18,6 +18,10 @@
     "cron",
     "api"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RafalWilinski/instats-backend.git"
+  },
   "author": "Rafal Wilinski",
   "license": "ISC",
   "dependencies": {
