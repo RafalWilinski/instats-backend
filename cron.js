@@ -20,7 +20,7 @@ const normalUsersCron = (postgres) => {
 
   }, () => {
     logger.info('normalUsersCron job stopped');
-  }, config.cronAutoStart);
+  }, config('cron_auto_start'));
 };
 
 const premiumUsersCron = (postgres) => {
@@ -31,7 +31,7 @@ const premiumUsersCron = (postgres) => {
 
   }, () => {
     logger.info('premiumUsersCron job stopped');
-  }, config.cronAutoStart);
+  }, config('cron_auto_start'));
 };
 
 const fetchUsersAndFollows = (postgres, isPremium) => {
@@ -43,7 +43,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
             insertSmallProfiles(followersArray, postgres);
           })
           .catch(() => {
-            log.error('failed to fetch follows');
+            logger.error('failed to fetch follows');
           });
       instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
           .then((followsArray) => {
@@ -51,7 +51,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
             insertSmallProfiles(followsArray, postgres);
           })
           .catch(() => {
-            log.error('failed to fetch follows');
+            logger.error('failed to fetch follows');
           });
     });
   });
@@ -64,7 +64,7 @@ const deleteUsersCron = (postgres) => {
     deleteOldData(postgres);
   }, () => {
     logger.info('deleteUsersCron job stopped');
-  }, config.cronAutoStart);
+  }, config('cron_auto_start'));
 };
 
 const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
@@ -85,27 +85,42 @@ const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
 });
 
 
-const deleteOldData = (postgres) => {
+const deleteOldData = (postgres) => new Promise((resolve, reject) => {
+  var jobsCount = 0;
+  const rowsSum = [];
   postgres('followers_arrays')
       .where(postgres.raw('now() > (timestamp + interval \'30 days\')'))
-      .del()
+      .returning('id')
+      .delete()
       .then((rows) => {
         logger.info('Number rows to be deleted', { rows });
+        check(rows);
       })
       .catch((err) => {
         logger.error('Failed to delete rows during cron', { err });
+        return reject();
       });
 
   postgres('followings_arrays')
       .where(postgres.raw('now() > (timestamp + interval \'30 days\')'))
-      .del()
+      .returning('id')
+      .delete()
       .then((rows) => {
         logger.info('Number rows to be deleted', { rows });
+        check(rows);
       })
       .catch((err) => {
         logger.error('Failed to delete rows during cron', { err });
+        return reject();
       });
-};
+
+  const check = (rows) => {
+    logger.info('Removed', rows);
+    rowsSum.push(rows);
+    jobsCount++;
+    if (jobsCount == 2) return resolve(rowsSum);
+  }
+});
 
 const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((resolve, reject) => {
   const tableName = isFollowers ? 'followers_arrays' : 'followings_arrays';
@@ -157,6 +172,8 @@ const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reje
 });
 
 module.exports = {
+  normalUsersCron,
+  deleteOldData,
   insertSmallProfiles,
   insertArray,
   startCrons

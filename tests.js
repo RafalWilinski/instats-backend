@@ -4,6 +4,8 @@ const dotenv = require('dotenv').config();
 const request = require('supertest');
 const fs = require('fs');
 const expect = require('chai').expect;
+const CronJob = require('cron').CronJob;
+const sinon = require('sinon');
 const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
@@ -189,7 +191,7 @@ describe('Cron Integration Tests', () => {
         });
   });
 
-  it('Saves follows to DB', () => {
+  it('Saves follows to DB', (done) => {
     const checkInsert = (originalData) => {
       postgres('followings_arrays')
           .select('*')
@@ -207,7 +209,7 @@ describe('Cron Integration Tests', () => {
 
     instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
         .then((followingsArrays) => {
-          cron.insertArray(testId, followingsArrays, true, postgres)
+          cron.insertArray(testId, followingsArrays, false, postgres)
               .then((data) => {
                 checkInsert(data);
               })
@@ -217,12 +219,26 @@ describe('Cron Integration Tests', () => {
         });
   });
 
-  it('Deletes followers and follows from DB', () => {
-
-  });
-
-  it('Works for premium users', () => {
-
+  it('Deletes followers and follows from DB', (done) => {
+    postgres('followers_arrays')
+        .insert({
+          user_ref: testId,
+          timestamp: new Date(1000).toUTCString(),
+          users_array: '{}'
+        })
+        .then(() => {
+          cron.deleteOldData(postgres)
+              .then((rows) => {
+                expect(rows.length).to.be.greaterThan(0);
+                done();
+              })
+              .catch((error) => {
+                throw new Error(error);
+              });
+        })
+        .catch((error) => {
+          throw new Error(error);
+        })
   });
 
   it('Saves smart profile to DB', (done) => {
