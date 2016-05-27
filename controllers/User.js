@@ -4,7 +4,7 @@ const logger = require('../log');
 
 const getFollowers = (req, res) => {
   if (req.query.id == null) {
-    req.status(400);
+    res.status(400);
     return res.json({
       error: 'id is missing'
     });
@@ -36,7 +36,7 @@ const getFollowers = (req, res) => {
 
 const getFollowings = (req, res) => {
   if (req.query.id == null) {
-    req.status(400);
+    res.status(400);
     return res.json({
       error: 'id is missing'
     });

@@ -75,7 +75,6 @@ const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
         is_premium: premium
       })
       .then((users) => {
-        console.log(users);
         return resolve(users.filter((user) => user.is_premium === premium));
       })
       .catch((err) => {

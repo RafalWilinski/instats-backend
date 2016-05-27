@@ -104,6 +104,13 @@ describe('API Integration Tests', () => {
         });
   });
 
+  it('Failes to fetch followers without id', (done) => {
+    const url = `/api/get_followings`;
+    request(app)
+        .get(url)
+        .expect(400, done);
+  });
+
   it('Fetches followers', (done) => {
     const url = `/api/get_followings?id=${testId}`;
     request(app)
@@ -116,6 +123,13 @@ describe('API Integration Tests', () => {
         });
   });
 
+  it('Failes to fetch follows without id', (done) => {
+    const url = `/api/get_followers`;
+    request(app)
+        .get(url)
+        .expect(400, done);
+  });
+
   it('Fetches follows', (done) => {
     const url = `/api/get_followers?id=${testId}`;
     request(app)
@@ -126,6 +140,13 @@ describe('API Integration Tests', () => {
           expect(data.body.result.length).to.be.greaterThan(50);
           done();
         });
+  });
+
+  it('Failes to fetch follows without access token', (done) => {
+    const url = `/api/get_stats`;
+    request(app)
+        .get(url)
+        .expect(400, done);
   });
 
   it('Fetches stats', (done) => {
@@ -142,6 +163,13 @@ describe('API Integration Tests', () => {
         });
   });
 
+  it('Failes to promote user without id', (done) => {
+    const url = `/api/promote`;
+    request(app)
+        .post(url)
+        .expect(400, done);
+  });
+
   it('Promotes user', (done) => {
     const url = `/api/promote`;
     request(app)
@@ -153,8 +181,23 @@ describe('API Integration Tests', () => {
         .end((err, data) => {
           if (err) throw new Error(err);
           expect(data.body.success).to.be.equal('ok');
-          done();
+          check();
         });
+
+    const check = () => {
+      postgres('users')
+          .select('*')
+          .where({
+            id: testId
+          })
+          .then((data) => {
+            expect(data[0].is_premium).to.be.equal(true);
+            done();
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+    }
   });
 });
 
