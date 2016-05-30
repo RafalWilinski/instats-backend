@@ -169,7 +169,7 @@ const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
     postgres('users')
         .select('*')
         .where({
-          instagram_id: payload.body.user.id
+          instagram_id
         })
         .then((data) => {
           if (data.length > 0) return resolve();
