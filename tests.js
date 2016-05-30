@@ -77,6 +77,21 @@ describe('Instagram API Tests', () => {
 });
 
 describe('API Integration Tests', () => {
+
+  before((done) => {
+    postgres('users')
+        .where({
+          instagram_name: 'new-test-user'
+        })
+        .delete()
+        .then(() => {
+          done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
+  })
+
   it('Healthcheck responds OK status', (done) => {
     request(app)
         .get('/healthcheck')
@@ -212,6 +227,35 @@ describe('API Integration Tests', () => {
     UserController.isUserRegistered(testInstagramId)
         .then(() => {
           done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
+  });
+
+  it('Registers new user', (done) => {
+    UserController.registerUser({
+      access_token: 123,
+      user: {
+        id: -111,
+        username: 'new-test-user',
+        token: 'this-is-super-secret',
+        profile_picture: 'http://idont.know'
+      }
+    })
+        .then(() => {
+          postgres('users')
+              .select('*')
+              .where({
+                instagram_id: -111
+              })
+              .then((data) => {
+                expect(data[0].instagram_name).to.be.equal('new-test-user');
+                done();
+              })
+              .catch(() => {
+                throw new Error();
+              });
         })
         .catch(() => {
           throw new Error();

@@ -150,11 +150,11 @@ const exchangeCodeForToken = (req, res) => {
   instagram.exchangeToken(req.body.code)
       .then((body) => {
         isUserRegistered(body.user.id)
-            .then(() => {
-
+            .then((user) => {
+              updateAccessToken(body, user);
             })
             .catch(() => {
-
+              registerUser(body);
             });
       })
       .catch(() => {
@@ -165,6 +165,38 @@ const exchangeCodeForToken = (req, res) => {
       });
 };
 
+const registerUser = (payload) => new Promise((resolve, reject) => {
+  postgres('users')
+      .insert({
+        instagram_id: payload.user.id,
+        instagram_name: payload.user.username,
+        access_token: payload.access_token,
+        profile_picture: payload.user.profile_picture,
+        last_login: new Date().toUTCString(),
+        access_token_validity: true,
+        is_premium: false,
+        register_date: new Date().toUTCString()
+      })
+      .then((data) => {
+        logger.info('New user registered', {
+          result: data,
+          payload
+        });
+        return resolve(data);
+      })
+      .catch((error) => {
+        logger.error('Error while registering new user', {
+          error,
+          payload
+        });
+        return reject(error);
+      });
+});
+
+const updateAccessToken = (body, existingUser) => {
+
+};
+
 const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
     postgres('users')
         .select('*')
@@ -172,7 +204,7 @@ const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
           instagram_id
         })
         .then((data) => {
-          if (data.length > 0) return resolve();
+          if (data.length > 0) return resolve(data[0]);
           else return reject();
         })
         .catch((error) => reject())
@@ -219,5 +251,7 @@ module.exports = {
   getStats,
   getUserInfo,
   isUserRegistered,
-  promoteUser
+  promoteUser,
+  registerUser,
+  updateAccessToken
 };
