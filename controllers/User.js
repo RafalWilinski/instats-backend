@@ -140,8 +140,43 @@ const getUserInfo = (req, res) => {
 };
 
 const exchangeCodeForToken = (req, res) => {
-  
+  if (req.body.code == null) {
+    res.status(403);
+    return res.json({
+      error: 'Exchange code is missing'
+    });
+  }
+
+  instagram.exchangeToken(req.body.code)
+      .then((body) => {
+        isUserRegistered(body.user.id)
+            .then(() => {
+
+            })
+            .catch(() => {
+
+            });
+      })
+      .catch(() => {
+        res.status(403);
+        return res.json({
+          error: 'Failed to exchange token'
+        });
+      });
 };
+
+const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
+    postgres('users')
+        .select('*')
+        .where({
+          instagram_id: payload.body.user.id
+        })
+        .then((data) => {
+          if (data.length > 0) return resolve();
+          else return reject();
+        })
+        .catch((error) => reject())
+);
 
 const promoteUser = (req, res) => {
   if (req.body.id == null) {
@@ -178,10 +213,11 @@ const promoteUser = (req, res) => {
 };
 
 module.exports = {
+  exchangeCodeForToken,
   getFollowers,
   getFollowings,
   getStats,
   getUserInfo,
-  exchangeCodeForToken,
+  isUserRegistered,
   promoteUser
 };

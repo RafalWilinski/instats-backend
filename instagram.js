@@ -237,25 +237,17 @@ const exchangeToken = (code) => new Promise((resolve, reject) => {
         code
       })
       .then((payload) => {
-
+        return resolve(payload.body);
       })
       .catch((error) => {
+        logger.error('Failed to exchange token', {
+          error,
+          code
+        });
 
+        return reject();
       });
 });
-
-const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
-    postgres('users')
-        .select('*')
-        .where({
-          instagram_id: payload.body.user.id
-        })
-        .then((data) => {
-          if (data.length > 0) return resolve();
-          else return reject();
-        })
-        .catch((error) => reject())
-);
 
 module.exports = {
   fetchFollowers,

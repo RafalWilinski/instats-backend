@@ -10,6 +10,7 @@ const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
 const cron = require('./cron');
+const UserController = require('./controllers/User');
 
 const testId = 4;
 const testInstagramId = config('instagram_test_id');
@@ -198,6 +199,23 @@ describe('API Integration Tests', () => {
             throw new Error(error);
           });
     }
+  });
+
+  it('Failes to exchange token without token supplied', (done) => {
+    const url = `/api/request_access_token`;
+    request(app)
+        .post(url)
+        .expect(403, done);
+  });
+
+  it('isUserRegistered returns true for registered user', (done) => {
+    UserController.isUserRegistered(testInstagramId)
+        .then(() => {
+          done();
+        })
+        .catch(() => {
+          throw new Error();
+        });
   });
 });
 
