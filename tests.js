@@ -30,49 +30,49 @@ describe('Config tests', () => {
 describe('Instagram API Tests', () => {
   it('Fetches stats using instagram API', (done) => {
     instagramApi.fetchStats(testInstagramAccessToken)
-        .then((data) => {
-          expect(data.meta.code).to.be.equal(200);
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then((data) => {
+        expect(data.meta.code).to.be.equal(200);
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 
   it('Fetches followers', (done) => {
     instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
-        .then((data) => {
-          expect(data).to.be.an('array');
-          expect(data.length).to.be.greaterThan(50);
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then((data) => {
+        expect(data).to.be.an('array');
+        expect(data.length).to.be.greaterThan(50);
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 
   it('Fetches follows', (done) => {
     instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
-        .then((data) => {
-          expect(data).to.be.an('array');
-          expect(data.length).to.be.greaterThan(50);
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then((data) => {
+        expect(data).to.be.an('array');
+        expect(data.length).to.be.greaterThan(50);
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 
   it('Fetches other user profile', (done) => {
     instagramApi.fetchProfile(testInstagramId, testInstagramAccessToken)
-        .then((data) => {
-          expect(data.meta.code).to.be.equal(200);
-          expect(data.data.username).to.be.equal(testInstagramUsername);
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then((data) => {
+        expect(data.meta.code).to.be.equal(200);
+        expect(data.data.username).to.be.equal(testInstagramUsername);
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 });
 
@@ -80,157 +80,157 @@ describe('API Integration Tests', () => {
 
   before((done) => {
     postgres('users')
-        .where({
-          instagram_name: 'new-test-user'
-        })
-        .delete()
-        .then(() => {
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .where({
+        instagram_name: 'new-test-user'
+      })
+      .delete()
+      .then(() => {
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   })
 
   it('Healthcheck responds OK status', (done) => {
     request(app)
-        .get('/healthcheck')
-        .expect(200)
-        .end((err) => {
-          if (err) throw new Error(err);
-          done();
-        })
+      .get('/healthcheck')
+      .expect(200)
+      .end((err) => {
+        if (err) throw new Error(err);
+        done();
+      })
   });
 
   it('Fails to fetch smart profile if access_token is not supplied', (done) => {
     const url = `/api/get_user_info?id=${testInstagramId}`;
     request(app)
-        .get(url)
-        .expect(400, done);
+      .get(url)
+      .expect(400, done);
   });
 
   it('Fetches smart profile', (done) => {
     const url = `/api/get_user_info?id=${testInstagramId}&access_token=${testInstagramAccessToken}`;
     request(app)
-        .get(url)
-        .end((err, data) => {
-          if (err) throw new Error(err);
-          expect(data.body.data.username).to.be.equal(testInstagramUsername);
-          done();
-        });
+      .get(url)
+      .end((err, data) => {
+        if (err) throw new Error(err);
+        expect(data.body.data.username).to.be.equal(testInstagramUsername);
+        done();
+      });
   });
 
   it('Failes to fetch followers without id', (done) => {
     const url = `/api/get_followings`;
     request(app)
-        .get(url)
-        .expect(400, done);
+      .get(url)
+      .expect(400, done);
   });
 
   it('Fetches followers', (done) => {
     const url = `/api/get_followings?id=${testId}`;
     request(app)
-        .get(url)
-        .end((err, data) => {
-          if (err) throw new Error(err);
-          expect(data.body.result).to.an('array');
-          expect(data.body.result.length).to.be.greaterThan(50);
-          done();
-        });
+      .get(url)
+      .end((err, data) => {
+        if (err) throw new Error(err);
+        expect(data.body.result).to.an('array');
+        expect(data.body.result.length).to.be.greaterThan(50);
+        done();
+      });
   });
 
   it('Failes to fetch follows without id', (done) => {
     const url = `/api/get_followers`;
     request(app)
-        .get(url)
-        .expect(400, done);
+      .get(url)
+      .expect(400, done);
   });
 
   it('Fetches follows', (done) => {
     const url = `/api/get_followers?id=${testId}`;
     request(app)
-        .get(url)
-        .end((err, data) => {
-          if (err) throw new Error(err);
-          expect(data.body.result).to.an('array');
-          expect(data.body.result.length).to.be.greaterThan(50);
-          done();
-        });
+      .get(url)
+      .end((err, data) => {
+        if (err) throw new Error(err);
+        expect(data.body.result).to.an('array');
+        expect(data.body.result.length).to.be.greaterThan(50);
+        done();
+      });
   });
 
   it('Failes to fetch follows without access token', (done) => {
     const url = `/api/get_stats`;
     request(app)
-        .get(url)
-        .expect(400, done);
+      .get(url)
+      .expect(400, done);
   });
 
   it('Fetches stats', (done) => {
     const url = `/api/get_stats?access_token=${testInstagramAccessToken}`;
     request(app)
-        .get(url)
-        .expect(200)
-        .end((err, data) => {
-          if (err) throw new Error(err);
-          expect(data.body).to.an('object');
-          expect(data.body.meta.code).to.be.equal(200);
-          expect(data.body.data.id).to.be.equal(testInstagramId);
-          done();
-        });
+      .get(url)
+      .expect(200)
+      .end((err, data) => {
+        if (err) throw new Error(err);
+        expect(data.body).to.an('object');
+        expect(data.body.meta.code).to.be.equal(200);
+        expect(data.body.data.id).to.be.equal(testInstagramId);
+        done();
+      });
   });
 
   it('Failes to promote user without id', (done) => {
     const url = `/api/promote`;
     request(app)
-        .post(url)
-        .expect(400, done);
+      .post(url)
+      .expect(400, done);
   });
 
   it('Promotes user', (done) => {
     const url = `/api/promote`;
     request(app)
-        .post(url)
-        .send({
-          id: testId
-        })
-        .expect(200)
-        .end((err, data) => {
-          if (err) throw new Error(err);
-          expect(data.body.success).to.be.equal('ok');
-          check();
-        });
+      .post(url)
+      .send({
+        id: testId
+      })
+      .expect(200)
+      .end((err, data) => {
+        if (err) throw new Error(err);
+        expect(data.body.success).to.be.equal('ok');
+        check();
+      });
 
     const check = () => {
       postgres('users')
-          .select('*')
-          .where({
-            id: testId
-          })
-          .then((data) => {
-            expect(data[0].is_premium).to.be.equal(true);
-            done();
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
+        .select('*')
+        .where({
+          id: testId
+        })
+        .then((data) => {
+          expect(data[0].is_premium).to.be.equal(true);
+          done();
+        })
+        .catch((error) => {
+          throw new Error(error);
+        });
     }
   });
 
   it('Failes to exchange token without token supplied', (done) => {
     const url = `/api/request_access_token`;
     request(app)
-        .post(url)
-        .expect(403, done);
+      .post(url)
+      .expect(403, done);
   });
 
   it('isUserRegistered returns true for registered user', (done) => {
     UserController.isUserRegistered(testInstagramId)
-        .then(() => {
-          done();
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then(() => {
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 
   it('Registers new user', (done) => {
@@ -243,113 +243,117 @@ describe('API Integration Tests', () => {
         profile_picture: 'http://idont.know'
       }
     })
-        .then(() => {
-          postgres('users')
-              .select('*')
-              .where({
-                instagram_id: -111
-              })
-              .then((data) => {
-                expect(data[0].instagram_name).to.be.equal('new-test-user');
-                done();
-              })
-              .catch(() => {
-                throw new Error();
-              });
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then(() => {
+        postgres('users')
+          .select('*')
+          .where({
+            instagram_id: -111
+          })
+          .then((data) => {
+            expect(data[0].instagram_name).to.be.equal('new-test-user');
+            done();
+          })
+          .catch(() => {
+            throw new Error();
+          });
+      })
+      .catch(() => {
+        throw new Error();
+      });
+  });
+
+  it('Updates newly created user', (done) => {
+
   });
 });
 
 describe('Cron Integration Tests', () => {
   before((done) => {
     postgres('small_profiles')
-        .where('instagram_id', '2')
-        .orWhere('instagram_id', '1')
-        .delete()
-        .then(() => {
-          done();
-        });
+      .where('instagram_id', '2')
+      .orWhere('instagram_id', '1')
+      .delete()
+      .then(() => {
+        done();
+      });
   });
 
   it('Saves followers to DB', (done) => {
     const checkInsert = (originalData) => {
       postgres('followers_arrays')
-          .select('*')
-          .where({
-            id: originalData[0]
-          })
-          .then((data) => {
-            expect(data[0].id).to.be.equal(originalData[0]);
-            done();
-          })
-          .catch((error) => {
-            throw new Error(error);
-          })
+        .select('*')
+        .where({
+          id: originalData[0]
+        })
+        .then((data) => {
+          expect(data[0].id).to.be.equal(originalData[0]);
+          done();
+        })
+        .catch((error) => {
+          throw new Error(error);
+        })
     };
 
     instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
-        .then((followersArray) => {
-          cron.insertArray(testId, followersArray, true, postgres)
-              .then((data) => {
-                checkInsert(data);
-              })
-              .catch((error) => {
-                throw new Error(error);
-              });
-        });
+      .then((followersArray) => {
+        cron.insertArray(testId, followersArray, true, postgres)
+          .then((data) => {
+            checkInsert(data);
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+      });
   });
 
   it('Saves follows to DB', (done) => {
     const checkInsert = (originalData) => {
       postgres('followings_arrays')
-          .select('*')
-          .where({
-            id: originalData[0]
-          })
-          .then((data) => {
-            expect(data[0].id).to.be.equal(originalData[0]);
-            done();
-          })
-          .catch((error) => {
-            throw new Error(error);
-          })
-    };
-
-    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
-        .then((followingsArrays) => {
-          cron.insertArray(testId, followingsArrays, false, postgres)
-              .then((data) => {
-                checkInsert(data);
-              })
-              .catch((error) => {
-                throw new Error(error);
-              });
-        });
-  });
-
-  it('Deletes followers and follows from DB', (done) => {
-    postgres('followers_arrays')
-        .insert({
-          user_ref: testId,
-          timestamp: new Date(1000).toUTCString(),
-          users_array: '{}'
+        .select('*')
+        .where({
+          id: originalData[0]
         })
-        .then(() => {
-          cron.deleteOldData(postgres)
-              .then((rows) => {
-                expect(rows.length).to.be.greaterThan(0);
-                done();
-              })
-              .catch((error) => {
-                throw new Error(error);
-              });
+        .then((data) => {
+          expect(data[0].id).to.be.equal(originalData[0]);
+          done();
         })
         .catch((error) => {
           throw new Error(error);
         })
+    };
+
+    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
+      .then((followingsArrays) => {
+        cron.insertArray(testId, followingsArrays, false, postgres)
+          .then((data) => {
+            checkInsert(data);
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+      });
+  });
+
+  it('Deletes followers and follows from DB', (done) => {
+    postgres('followers_arrays')
+      .insert({
+        user_ref: testId,
+        timestamp: new Date(1000).toUTCString(),
+        users_array: '{}'
+      })
+      .then(() => {
+        cron.deleteOldData(postgres)
+          .then((rows) => {
+            expect(rows.length).to.be.greaterThan(0);
+            done();
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+      })
+      .catch((error) => {
+        throw new Error(error);
+      })
   });
 
   it('Saves smart profile to DB', (done) => {
@@ -364,23 +368,23 @@ describe('Cron Integration Tests', () => {
         profile_picture: 'http://user_b.jpg'
       }
     ], postgres)
-        .then(() => {
-          postgres('small_profiles')
-              .select('*')
-              .where({
-                instagram_id: '2'
-              })
-              .then((users) => {
-                expect(users.length).to.be.equal(1);
-                done();
-              })
-              .catch((error) => {
-                throw new Error(error);
-              });
-        })
-        .catch(() => {
-          throw new Error();
-        });
+      .then(() => {
+        postgres('small_profiles')
+          .select('*')
+          .where({
+            instagram_id: '2'
+          })
+          .then((users) => {
+            expect(users.length).to.be.equal(1);
+            done();
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+      })
+      .catch(() => {
+        throw new Error();
+      });
 
   });
 });
