@@ -1,3 +1,4 @@
+'use strict';
 const dotenv = require('dotenv').config();
 require('@risingstack/trace');
 const newrelic = require('newrelic');

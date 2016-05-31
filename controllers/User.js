@@ -1,3 +1,4 @@
+'use strict';
 const instagram = require('../instagram');
 const postgres = require('../postgres');
 const logger = require('../log');
