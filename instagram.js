@@ -50,53 +50,53 @@ const jsonToParams = (data) => Object.keys(data).map((k) => {
 
 const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise((resolve, reject) => {
   return axios.get(fullUrl)
-      .then((payload) => {
-        if (payload.data.meta.code === 200) {
+    .then((payload) => {
+      if (payload.data.meta.code === 200) {
 
-          if (payload.data.hasOwnProperty('pagination') &&
-              payload.data.pagination.hasOwnProperty('next_url')) {
+        if (payload.data.hasOwnProperty('pagination') &&
+          payload.data.pagination.hasOwnProperty('next_url')) {
 
-            const paginationUrl = modifyPaginationUrl(payload.data.pagination.next_url, path);
-            logger.info('Fetching paginated data', {
-              paginationUrl,
-              fullUrl,
-              path
-            });
-
-            return resolve(fetchPaginatedData(paginationUrl, path, [...accumulator, ...payload.data.data], dbUserId));
-
-          } else {
-            const array = [...accumulator, ...payload.data.data];
-            logger.info('Pagination end reached', {
-              array,
-              path,
-              dbUserId
-            });
-
-            return resolve(array);
-          }
-
-        } else {
-          logger.warn('Instagram API returned non-200 status code (paginated)', {
+          const paginationUrl = modifyPaginationUrl(payload.data.pagination.next_url, path);
+          logger.info('Fetching paginated data', {
+            paginationUrl,
             fullUrl,
-            path,
-            status: payload.status,
-            data: payload.data,
-            headers: payload.headers
+            path
           });
 
-          return reject();
+          return resolve(fetchPaginatedData(paginationUrl, path, [...accumulator, ...payload.data.data], dbUserId));
+
+        } else {
+          const array = [...accumulator, ...payload.data.data];
+          logger.info('Pagination end reached', {
+            array,
+            path,
+            dbUserId
+          });
+
+          return resolve(array);
         }
-      })
-      .catch((error) => {
-        logger.warn('Instagram API error (paginated)', {
-          error,
+
+      } else {
+        logger.warn('Instagram API returned non-200 status code (paginated)', {
           fullUrl,
           path,
-          dbUserId
+          status: payload.status,
+          data: payload.data,
+          headers: payload.headers
         });
+
         return reject();
+      }
+    })
+    .catch((error) => {
+      logger.warn('Instagram API error (paginated)', {
+        error,
+        fullUrl,
+        path,
+        dbUserId
       });
+      return reject();
+    });
 });
 
 const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, reject) => {
@@ -155,36 +155,36 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
   })}`;
 
   return axios.get(fullUrl)
-      .then((payload) => {
-        logger.info('Fetch user stats succeeded', {
+    .then((payload) => {
+      logger.info('Fetch user stats succeeded', {
+        access_token,
+        sig,
+        status: payload.status,
+        data: payload.data
+      });
+
+      if (payload.data.meta.code === 200) {
+        return resolve(payload.data);
+      } else {
+        logger.warn('[fetchProfile] Instagram API returned non-200 status code', {
           access_token,
           sig,
           status: payload.status,
-          data: payload.data
-        });
-
-        if (payload.data.meta.code === 200) {
-          return resolve(payload.data);
-        } else {
-          logger.warn('[fetchProfile] Instagram API returned non-200 status code', {
-            access_token,
-            sig,
-            status: payload.status,
-            data: payload.data,
-            headers: payload.headers
-          });
-          return reject();
-        }
-      })
-      .catch((error) => {
-        logger.error('Failed to fetch instagram user', {
-          error,
-          instagramId,
-          sig,
-          access_token
+          data: payload.data,
+          headers: payload.headers
         });
         return reject();
+      }
+    })
+    .catch((error) => {
+      logger.error('Failed to fetch instagram user', {
+        error,
+        instagramId,
+        sig,
+        access_token
       });
+      return reject();
+    });
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
@@ -197,57 +197,57 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
   })}`;
 
   return axios.get(fullUrl)
-      .then((payload) => {
-        logger.info('Fetch user stats succeeded', {
+    .then((payload) => {
+      logger.info('Fetch user stats succeeded', {
+        access_token,
+        sig,
+        status: payload.status,
+        data: payload.data,
+        headers: payload.headers
+      });
+
+      if (payload.data.meta.code === 200) {
+        return resolve(payload.data);
+      } else {
+        logger.warn('[fetchStats] Instagram API returned non-200 status code', {
           access_token,
           sig,
           status: payload.status,
           data: payload.data,
           headers: payload.headers
         });
-
-        if (payload.data.meta.code === 200) {
-          return resolve(payload.data);
-        } else {
-          logger.warn('[fetchStats] Instagram API returned non-200 status code', {
-            access_token,
-            sig,
-            status: payload.status,
-            data: payload.data,
-            headers: payload.headers
-          });
-          return reject();
-        }
-      }).catch((error) => {
-        logger.error('Failed to fetch instagram user stats', {
-          error,
-          sig,
-          access_token
-        });
         return reject();
+      }
+    }).catch((error) => {
+      logger.error('Failed to fetch instagram user stats', {
+        error,
+        sig,
+        access_token
       });
+      return reject();
+    });
 });
 
 const exchangeToken = (code) => new Promise((resolve, reject) => {
   return axios.post(`${config('instagram_base_url')}/oauth/access_token/`)
-      .send({
-        client_id: config('instagram_client_id'),
-        client_secret: config('instagram_client_secret'),
-        grant_type: 'authorization_code',
-        redirect_url: config('instagram_callback_url'),
+    .send({
+      client_id: config('instagram_client_id'),
+      client_secret: config('instagram_client_secret'),
+      grant_type: 'authorization_code',
+      redirect_url: config('instagram_callback_url'),
+      code
+    })
+    .then((payload) => {
+      return resolve(payload.body);
+    })
+    .catch((error) => {
+      logger.error('Failed to exchange token', {
+        error,
         code
-      })
-      .then((payload) => {
-        return resolve(payload.body);
-      })
-      .catch((error) => {
-        logger.error('Failed to exchange token', {
-          error,
-          code
-        });
-
-        return reject();
       });
+
+      return reject();
+    });
 });
 
 module.exports = {

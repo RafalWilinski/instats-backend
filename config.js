@@ -1,5 +1,5 @@
 /*
-Configuration resolver class which takes sensitive data from supplied file or environment variables
+ Configuration resolver class which takes sensitive data from supplied file or environment variables
  */
 
 const getVariable = (key) => {
