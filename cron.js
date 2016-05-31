@@ -3,13 +3,7 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const config = require('./config.js');
 const logger = require('./log');
-const metrics = require('metrics');
-const metricsServer = require('./app').metricsServer;
-
-const smSuccess = metricsServer.addMetric('db.insert.small_profile.success', metrics.Counter);
-const smFail = metricsServer.addMetric('db.insert.small_profile.fail', metrics.Counter);
-const arrSuccess = metricsServer.addMetric('db.insert.arrays.success', metrics.Counter);
-const arrFail = metricsServer.addMetric('db.insert.arrays.fail', metrics.Counter);
+const metrics = require('./metrics');
 
 const instagram = require('./instagram');
 
@@ -43,7 +37,13 @@ const premiumUsersCron = (postgres) => {
 
 const fetchUsersAndFollows = (postgres, isPremium) => {
   fetchUsers(postgres, isPremium).then((users) => {
-    users.forEach((user) => {
+    for (var i = 0; i < users.length; i++) {
+      fetchFollows(users[i], i);
+    }
+  });
+
+  const fetchFollows = (user, i) => {
+    setTimeout(() => {
       instagram.fetchFollowers(user.id, user.instagram_id, user.access_token)
         .then((followersArray) => {
           insertArray(user.id, followersArray, true, postgres);
@@ -52,6 +52,7 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
         .catch(() => {
           logger.error('failed to fetch follows');
         });
+
       instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
         .then((followsArray) => {
           insertArray(user.id, followsArray, false, postgres);
@@ -60,8 +61,8 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
         .catch(() => {
           logger.error('failed to fetch follows');
         });
-    });
-  });
+    }, i * 500);
+  }
 };
 
 const deleteUsersCron = (postgres) => {
@@ -79,7 +80,8 @@ const fetchUsers = (postgres, premium) => new Promise((resolve, reject) => {
     .select('*')
     .from('users')
     .where({
-      is_premium: premium
+      is_premium: premium,
+      access_token_validity: true
     })
     .then((users) => {
       return resolve(users.filter((user) => user.is_premium === premium));
@@ -99,10 +101,12 @@ const deleteOldData = (postgres) => new Promise((resolve, reject) => {
     .returning('id')
     .delete()
     .then((rows) => {
+      metrics.deleteSuccess.inc();
       logger.info('Number rows to be deleted', { rows });
       check(rows);
     })
     .catch((err) => {
+      metrics.deleteFail.inc();
       logger.error('Failed to delete rows during cron', { err });
       return reject();
     });
@@ -112,10 +116,12 @@ const deleteOldData = (postgres) => new Promise((resolve, reject) => {
     .returning('id')
     .delete()
     .then((rows) => {
+      metrics.deleteSuccess.inc();
       logger.info('Number rows to be deleted', { rows });
       check(rows);
     })
     .catch((err) => {
+      metrics.deleteFail.inc();
       logger.error('Failed to delete rows during cron', { err });
       return reject();
     });
@@ -139,7 +145,7 @@ const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((
     })
     .returning('id')
     .then((data) => {
-      arrSuccess.inc();
+      metrics.arraySuccess.inc();
       logger.info('data inserted', {
         tableName,
         userId,
@@ -149,7 +155,7 @@ const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((
       return resolve(data);
     })
     .catch((error) => {
-      arrFail.inc();
+      metrics.arrayFail.inc();
       logger.error('failed to insert data', {
         error,
         userId,
@@ -161,24 +167,59 @@ const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((
 });
 
 const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reject) => {
-  usersArray.forEach((user) => {
-    postgres('small_profiles')
-      .insert({
-        name: user.username,
-        instagram_id: user.id,
-        picture_url: user.profile_picture
-      })
-      .then((data) => {
-        logger.info('Small profile inserted', data);
-        smSuccess.inc();
-        return resolve();
-      })
-      .catch((err) => {
-        logger.warn('Failed to enter small profile', err);
-        smFail.inc();
-        return reject();
+  const userIds = usersArray.map((user) => user.id);
+
+  postgres('small_profiles')
+    .select('instagram_id')
+    .whereIn('instagram_id', userIds)
+    .then((data) => {
+      metrics.spDuplicate.inc(data.length);
+      insert(difference(userIds, data));
+    })
+    .catch((error) => {
+      logger.warn('Failed to enter small profile', error);
+    });
+
+  const difference = (array_1, array_2) => {
+    return array_1.filter((obj) => {
+      return !array_2.some((obj2) => {
+        return obj.value == obj2.value;
       });
-  });
+    });
+  };
+
+  const insert = (users) => {
+    if (users.length > 0) {
+      logger.info('Inserting small_profiles', {
+        count: users.length
+      });
+
+      const insertableUsers = users.map((user) => {
+        return {
+          instagram_id: user.id,
+          name: user.username,
+          profile_picture: user.profile_picture
+        };
+      });
+
+      postgres('small_profiles')
+        .insert({
+          insertableUsers
+        })
+        .then((data) => {
+          logger.info('Small profiles inserted', data);
+          metrics.spSuccess.inc(insertableUsers.length);
+          return resolve();
+        })
+        .catch((err) => {
+          logger.warn('Failed to enter small profile', err);
+          metrics.spFail.inc(insertableUsers.length);
+          return reject();
+        });
+    } else {
+      return resolve();
+    }
+  }
 });
 
 module.exports = {

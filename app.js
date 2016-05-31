@@ -4,13 +4,12 @@ require('@risingstack/trace');
 const newrelic = require('newrelic');
 const express = require('express');
 const postgres = require('./postgres');
-const crons = require('./cron');
 const router = require('./router');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const winston = require('winston');
 const logger = require('./log');
-const metrics = require('metrics');
+const crons = require('./cron');
 const app = express();
 
 app.use(cors());
@@ -26,9 +25,4 @@ app.listen(process.env.PORT || 3000, () => {
   logger.info('Server started at ' + (process.env.PORT || 3000) + ' port');
 });
 
-const metricsServer = new metrics.Server(8081);
-
-module.exports = {
-  app,
-  metricsServer
-};
+module.exports = app;

@@ -5,6 +5,8 @@ const Promise = require('bluebird');
 const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
+const metrics = require('./metrics');
+const UserController = require('./controllers/User');
 
 const defaultFetchCount = config('default_fetch_count');
 
@@ -63,6 +65,7 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
             path
           });
 
+          metrics.paginationSuccess.inc();
           return resolve(fetchPaginatedData(paginationUrl, path, [...accumulator, ...payload.data.data], dbUserId));
 
         } else {
@@ -73,6 +76,7 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
             dbUserId
           });
 
+          metrics.paginationSuccess.inc();
           return resolve(array);
         }
 
@@ -85,17 +89,20 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
           headers: payload.headers
         });
 
+        metrics.paginationFail.inc();
         return reject();
       }
     })
     .catch((error) => {
       logger.warn('Instagram API error (paginated)', {
-        error,
         fullUrl,
         path,
-        dbUserId
+        dbUserId,
+        error: error.data
       });
-      return reject();
+
+      metrics.paginationFail.inc();
+      return reject(error.data);
     });
 });
 
@@ -113,11 +120,23 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
   })}`;
 
   return fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
+    metrics.followersSuccess.inc();
     return resolve(followersArray);
-  }).catch((err) => {
+  }).catch((error) => {
     logger.error('failed to fetch followers', {
-      id, instagramId, fullUrl, path, err
+      id, instagramId, fullUrl, path, error
     });
+
+    if (error.meta.error_type === 'OAuthAccessTokenException') {
+      logger.info('Invalidating user', {
+        id
+      });
+
+      metrics.oauthExceptions.inc();
+      UserController.invalidateAccessToken(id);
+    }
+
+    metrics.followersFail.inc();
     return reject();
   });
 });
@@ -136,11 +155,23 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
   })}`;
 
   fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
+    metrics.followsSuccess.inc();
     return resolve(followsArray);
-  }).catch((err) => {
-    logger.error('failed to fetch followers', {
-      id, instagramId, fullUrl, path, err
+  }).catch((error) => {
+    logger.error('failed to fetch followings', {
+      id, instagramId, fullUrl, path, error
     });
+
+    if (error.meta.error_type === 'OAuthAccessTokenException') {
+      logger.info('Invalidating user', {
+        id
+      });
+
+      metrics.oauthExceptions.inc();
+      UserController.invalidateAccessToken(id);
+    }
+
+    metrics.followsFail.inc();
     return reject();
   });
 });
@@ -164,6 +195,7 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
       });
 
       if (payload.data.meta.code === 200) {
+        metrics.fetchUserSuccess.inc();
         return resolve(payload.data);
       } else {
         logger.warn('[fetchProfile] Instagram API returned non-200 status code', {
@@ -173,6 +205,8 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
           data: payload.data,
           headers: payload.headers
         });
+
+        metrics.fetchUserFail.inc();
         return reject();
       }
     })
@@ -183,6 +217,8 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
         sig,
         access_token
       });
+
+      metrics.fetchUserFail.inc();
       return reject();
     });
 });
@@ -207,6 +243,7 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
       });
 
       if (payload.data.meta.code === 200) {
+        metrics.fetchStatsSuccess.inc();
         return resolve(payload.data);
       } else {
         logger.warn('[fetchStats] Instagram API returned non-200 status code', {
@@ -216,6 +253,8 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
           data: payload.data,
           headers: payload.headers
         });
+
+        metrics.fetchStatsFail.inc();
         return reject();
       }
     }).catch((error) => {
@@ -224,6 +263,8 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
         sig,
         access_token
       });
+
+      metrics.fetchStatsFail.inc();
       return reject();
     });
 });
@@ -238,6 +279,7 @@ const exchangeToken = (code) => new Promise((resolve, reject) => {
       code
     })
     .then((payload) => {
+      metrics.exchangeSuccess.inc();
       return resolve(payload.body);
     })
     .catch((error) => {
@@ -246,6 +288,7 @@ const exchangeToken = (code) => new Promise((resolve, reject) => {
         code
       });
 
+      metrics.exchangeFail.inc();
       return reject();
     });
 });

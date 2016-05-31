@@ -285,6 +285,28 @@ const promoteUser = (req, res) => {
   }
 };
 
+const invalidateAccessToken = (userId) => {
+  postgres('users')
+    .update({
+      access_token_validity: false
+    })
+    .where({
+      id: userId
+    })
+    .then((data) => {
+      logger.info('Access token invalidated', {
+        userId,
+        data
+      });
+    })
+    .catch((error) => {
+      logger.info('Failed to invalidate access token', {
+        userId,
+        error
+      })
+    });
+};
+
 module.exports = {
   exchangeCodeForToken,
   getFollowers,
@@ -294,5 +316,6 @@ module.exports = {
   isUserRegistered,
   promoteUser,
   registerUser,
-  updateAccessToken
+  updateAccessToken,
+  invalidateAccessToken
 };
