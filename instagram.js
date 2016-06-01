@@ -66,10 +66,10 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
           });
 
           metrics.paginationSuccess.inc();
-          return resolve(fetchPaginatedData(paginationUrl, path, [...accumulator, ...payload.data.data], dbUserId));
+          return resolve(fetchPaginatedData(paginationUrl, path, accumulator.concat(payload.data.data), dbUserId));
 
         } else {
-          const array = [...accumulator, ...payload.data.data];
+          const array = accumulator.concat(payload.data.data);
           logger.info('Pagination end reached', {
             array,
             path,
