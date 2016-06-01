@@ -285,7 +285,7 @@ const promoteUser = (req, res) => {
   }
 };
 
-const invalidateAccessToken = (userId) => {
+const invalidateAccessToken = (userId) => new Promise((resolve, reject) => {
   postgres('users')
     .update({
       access_token_validity: false
@@ -298,14 +298,18 @@ const invalidateAccessToken = (userId) => {
         userId,
         data
       });
+
+      return resolve();
     })
     .catch((error) => {
-      logger.info('Failed to invalidate access token', {
+      logger.error('Failed to invalidate access token', {
         userId,
         error
-      })
+      });
+
+      return reject();
     });
-};
+});
 
 module.exports = {
   exchangeCodeForToken,

@@ -174,7 +174,7 @@ const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reje
     .whereIn('instagram_id', userIds)
     .then((data) => {
       metrics.spDuplicate.inc(data.length);
-      insert(difference(userIds, data));
+      insert(difference(usersArray, data));
     })
     .catch((error) => {
       logger.warn('Failed to enter small profile', error);
@@ -198,14 +198,14 @@ const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reje
         return {
           instagram_id: user.id,
           name: user.username,
-          profile_picture: user.profile_picture
+          picture_url: user.profile_picture
         };
       });
 
       postgres('small_profiles')
-        .insert({
+        .insert(
           insertableUsers
-        })
+        )
         .then((data) => {
           logger.info('Small profiles inserted', data);
           metrics.spSuccess.inc(insertableUsers.length);

@@ -263,7 +263,39 @@ describe('API Integration Tests', () => {
   });
 
   it('Updates newly created user', (done) => {
+    UserController.updateAccessToken({
+      user: {
+        id: -111
+      },
+      access_token: '123'
+    })
+      .then(() => {
+        postgres('users')
+          .select('*')
+          .where({
+            instagram_id: -111
+          })
+          .then((data) => {
+            expect(data[0].access_token).to.be.equal('123');
+            done();
+          })
+          .catch(() => {
+            throw new Error();
+          });
+      })
+      .catch(() => {
+        throw new Error();
+      });
+  });
 
+  it('Invalidates access token', (done) => {
+    UserController.invalidateAccessToken(testId)
+      .then(() => {
+        done();
+      })
+      .catch(() => {
+        throw new Error();
+      });
   });
 });
 
