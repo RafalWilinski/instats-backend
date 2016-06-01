@@ -41,6 +41,7 @@ describe('Instagram API Tests', () => {
 
   it('Fetches followers', (done) => {
     instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
+      .expect(200)
       .then((data) => {
         expect(data).to.be.an('array');
         expect(data.length).to.be.greaterThan(50);
@@ -53,6 +54,7 @@ describe('Instagram API Tests', () => {
 
   it('Fetches follows', (done) => {
     instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
+      .expect(200)
       .then((data) => {
         expect(data).to.be.an('array');
         expect(data.length).to.be.greaterThan(50);

@@ -48,6 +48,14 @@ server.addMetric('api.instagram.users.fail', fetchUserFail);
 server.addMetric('api.instagram.exchange.success', exchangeSuccess);
 server.addMetric('api.instagram.exchange.fail', exchangeFail);
 
+// Instats API Metrics
+const apiExchangeSuccess = new metrics.Counter;
+const apiExchangeFail = new metrics.Counter;
+
+server.addMetric('api.instats.exchange.success', apiExchangeSuccess);
+server.addMetric('api.instats.exchange.fail', apiExchangeFail);
+
+
 module.exports = {
   server,
   spSuccess,
@@ -69,5 +77,7 @@ module.exports = {
   fetchUserSuccess,
   fetchUserFail,
   exchangeSuccess,
-  exchangeFail
+  exchangeFail,
+  apiExchangeSuccess,
+  apiExchangeFail
 };

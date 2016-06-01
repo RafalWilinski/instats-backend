@@ -2,6 +2,7 @@
 const instagram = require('../instagram');
 const postgres = require('../postgres');
 const logger = require('../log');
+const metrics = require('../metrics');
 
 const getFollowers = (req, res) => {
   if (req.query.id == null) {
@@ -17,7 +18,7 @@ const getFollowers = (req, res) => {
       })
       .orderBy('timestamp', 'asc')
       .then((arrays) => {
-        res.status(400);
+        res.status(200);
         return res.json({
           result: arrays
         });
@@ -37,6 +38,7 @@ const getFollowers = (req, res) => {
 
 const getFollowings = (req, res) => {
   if (req.query.id == null) {
+    metrics.apiExchangeFail.inc();
     res.status(400);
     return res.json({
       error: 'id is missing'
@@ -49,7 +51,8 @@ const getFollowings = (req, res) => {
       })
       .orderBy('timestamp', 'asc')
       .then((arrays) => {
-        res.status(400);
+        metrics.apiExchangeSuccess.inc();
+        res.status(200);
         return res.json({
           result: arrays
         });
@@ -59,6 +62,8 @@ const getFollowings = (req, res) => {
           id: req.query.id,
           error
         });
+
+        metrics.apiExchangeFail.inc();
         res.status(400);
         return res.json({
           error: 'error running query'
@@ -153,11 +158,17 @@ const exchangeCodeForToken = (req, res) => {
       isUserRegistered(body.user.id)
         .then((user) => {
           updateAccessToken(body, user)
-            .then(() => {
-
+            .then((data) => {
+              res.status(200);
+              return res.json({
+                data: data[0]
+              });
             })
             .catch(() => {
-
+              res.status(403);
+              return res.json({
+                error: 'Failed to exchange token'
+              });
             });
         })
         .catch(() => {
