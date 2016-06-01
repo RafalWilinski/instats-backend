@@ -1,6 +1,6 @@
 const metrics = require('metrics');
 
-const server = new metrics.Server(4354);
+const server = new metrics.Server(1337);
 
 // Database metrics
 const spSuccess = new metrics.Counter;

@@ -270,8 +270,7 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
 });
 
 const exchangeToken = (code) => new Promise((resolve, reject) => {
-  return axios.post(`${config('instagram_base_url')}/oauth/access_token/`)
-    .send({
+  return axios.post(`${config('instagram_base_url')}/oauth/access_token/`, {
       client_id: config('instagram_client_id'),
       client_secret: config('instagram_client_secret'),
       grant_type: 'authorization_code',
