@@ -157,7 +157,8 @@ const exchangeCodeForToken = (req, res) => {
         metrics.apiExchangeFail.inc();
 
         logger.error('Instagram API responded with non-200 status', {
-          code,
+          statusCode: body.code,
+          code: req.body.code,
           body
         });
 
@@ -169,15 +170,21 @@ const exchangeCodeForToken = (req, res) => {
       isUserRegistered(body.user.id)
         .then((user) => {
           updateAccessToken(body, user)
-            .then((data) => {
+            .then(() => {
               metrics.apiExchangeSuccess.inc();
               res.status(200);
               return res.json({
-                data: data[0]
+                data: body
               });
             })
-            .catch(() => {
+            .catch((error) => {
               metrics.apiExchangeFail.inc();
+
+              logger.error('failed to update access token', {
+                error,
+                body
+              });
+
               res.status(403);
               return res.json({
                 error: 'Failed to exchange token'
@@ -193,7 +200,12 @@ const exchangeCodeForToken = (req, res) => {
                 data: data[0]
               });
             })
-            .catch(() => {
+            .catch((error) => {
+              logger.error('Failed to register new user to DB', {
+                error,
+                body
+              });
+
               metrics.apiExchangeFail.inc();
               res.status(400);
               return res.json({
