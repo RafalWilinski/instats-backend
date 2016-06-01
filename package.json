@@ -26,7 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "@risingstack/trace": "^2.13.3",
-    "axios": "^0.11.1",
+    "axios": "^0.12.0",
     "bluebird": "^3.3.5",
     "body-parser": "^1.15.1",
     "cors": "^2.7.1",
@@ -40,6 +40,7 @@
     "nodemon": "^1.9.2",
     "pg": "^4.5.5",
     "pq": "0.0.3",
+    "request": "^2.72.0",
     "sinon": "^1.17.4",
     "winston": "^2.2.0"
   },

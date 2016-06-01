@@ -7,6 +7,7 @@ const config = require('./config.js');
 const logger = require('./log');
 const metrics = require('./metrics');
 const UserController = require('./controllers/User');
+const request = require('request');
 
 const defaultFetchCount = config('default_fetch_count');
 
@@ -159,7 +160,7 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
     return resolve(followsArray);
   }).catch((error) => {
     logger.error('failed to fetch followings', {
-      id, instagramId, fullUrl, path, error
+      id, instagramId, fullUrl, path, error: error.data
     });
 
     if (error.meta.error_type === 'OAuthAccessTokenException') {
@@ -212,7 +213,7 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
     })
     .catch((error) => {
       logger.error('Failed to fetch instagram user', {
-        error,
+        error: error.data,
         instagramId,
         sig,
         access_token
@@ -259,7 +260,7 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
       }
     }).catch((error) => {
       logger.error('Failed to fetch instagram user stats', {
-        error,
+        status: error.status,
         sig,
         access_token
       });
@@ -270,26 +271,34 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
 });
 
 const exchangeToken = (code) => new Promise((resolve, reject) => {
-  return axios.post(`${config('instagram_base_url')}/oauth/access_token/`, {
+  request.post({
+    url: 'https://api.instagram.com/oauth/access_token/',
+    form: {
       client_id: config('instagram_client_id'),
       client_secret: config('instagram_client_secret'),
       grant_type: 'authorization_code',
-      redirect_url: config('instagram_callback_url'),
+      redirect_uri: config('instagram_callback_url'),
       code
-    })
-    .then((payload) => {
-      metrics.exchangeSuccess.inc();
-      return resolve(payload.body);
-    })
-    .catch((error) => {
-      logger.error('Failed to exchange token', {
-        error,
-        code
+    }
+  }, function (error, response, body) {
+    if (error) {
+        logger.error('Failed to call instagram api', {
+          error,
+          url: 'https://api.instagram.com/oauth/access_token/',
+          code
+        });
+
+        metrics.exchangeFail.inc();
+        return reject();
+    } else {
+      logger.info('Instagram info fetched', {
+        body: JSON.parse(body)
       });
 
-      metrics.exchangeFail.inc();
-      return reject();
-    });
+      metrics.exchangeSuccess.inc();
+      return resolve(JSON.parse(body));
+    }
+  });
 });
 
 module.exports = {

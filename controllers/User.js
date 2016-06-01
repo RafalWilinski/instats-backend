@@ -38,7 +38,6 @@ const getFollowers = (req, res) => {
 
 const getFollowings = (req, res) => {
   if (req.query.id == null) {
-    metrics.apiExchangeFail.inc();
     res.status(400);
     return res.json({
       error: 'id is missing'
@@ -51,7 +50,6 @@ const getFollowings = (req, res) => {
       })
       .orderBy('timestamp', 'asc')
       .then((arrays) => {
-        metrics.apiExchangeSuccess.inc();
         res.status(200);
         return res.json({
           result: arrays
@@ -63,7 +61,6 @@ const getFollowings = (req, res) => {
           error
         });
 
-        metrics.apiExchangeFail.inc();
         res.status(400);
         return res.json({
           error: 'error running query'
@@ -155,16 +152,32 @@ const exchangeCodeForToken = (req, res) => {
 
   instagram.exchangeToken(req.body.code)
     .then((body) => {
+      if (body.hasOwnProperty('code') && body.code !== 200) {
+        res.status(403);
+        metrics.apiExchangeFail.inc();
+
+        logger.error('Instagram API responded with non-200 status', {
+          code,
+          body
+        });
+
+        return res.json({
+          error: 'Failed to exchange token'
+        });
+      }
+
       isUserRegistered(body.user.id)
         .then((user) => {
           updateAccessToken(body, user)
             .then((data) => {
+              metrics.apiExchangeSuccess.inc();
               res.status(200);
               return res.json({
                 data: data[0]
               });
             })
             .catch(() => {
+              metrics.apiExchangeFail.inc();
               res.status(403);
               return res.json({
                 error: 'Failed to exchange token'
@@ -174,12 +187,14 @@ const exchangeCodeForToken = (req, res) => {
         .catch(() => {
           registerUser(body)
             .then((data) => {
+              metrics.apiExchangeSuccess.inc();
               res.status(200);
               return res.json({
                 data: data[0]
               });
             })
             .catch(() => {
+              metrics.apiExchangeFail.inc();
               res.status(400);
               return res.json({
                 error: 'failed to register user'
@@ -188,6 +203,7 @@ const exchangeCodeForToken = (req, res) => {
         });
     })
     .catch(() => {
+      metrics.apiExchangeFail.inc();
       res.status(403);
       return res.json({
         error: 'Failed to exchange token'
