@@ -95,6 +95,7 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
       }
     })
     .catch((error) => {
+      console.log(error);
       logger.warn('Instagram API error (paginated)', {
         fullUrl,
         path,
@@ -119,7 +120,7 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     count: defaultFetchCount,
     sig
   })}`;
-
+  
   return fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
     metrics.followersSuccess.inc();
     return resolve(followersArray);
