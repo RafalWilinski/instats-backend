@@ -170,11 +170,11 @@ const exchangeCodeForToken = (req, res) => {
       isUserRegistered(body.user.id)
         .then((user) => {
           updateAccessToken(body, user)
-            .then(() => {
+            .then((data) => {
               metrics.apiExchangeSuccess.inc();
               res.status(200);
               return res.json({
-                data: body
+                data: data[0]
               });
             })
             .catch((error) => {
@@ -235,6 +235,7 @@ const registerUser = (payload) => new Promise((resolve, reject) => {
       is_premium: false,
       register_date: new Date().toUTCString()
     })
+    .returning('*')
     .then((data) => {
       logger.info('New user registered', {
         result: data,
@@ -257,6 +258,7 @@ const updateAccessToken = (body) => new Promise((resolve, reject) => {
       instagram_id: body.user.id
     })
     .increment('logins_count', 1)
+    .returning('*')
     .update({
       last_login: new Date().toUTCString(),
       access_token: body.access_token
