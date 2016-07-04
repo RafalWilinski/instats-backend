@@ -214,8 +214,9 @@ const exchangeCodeForToken = (req, res) => {
             });
         });
     })
-    .catch(() => {
+    .catch((error) => {
       metrics.apiExchangeFail.inc();
+      logger.error('Failed to register new user - Instagram API Responded with error', error);
       res.status(403);
       return res.json({
         error: 'Failed to exchange token'

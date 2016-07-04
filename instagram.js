@@ -290,7 +290,7 @@ const exchangeToken = (code) => new Promise((resolve, reject) => {
         });
 
         metrics.exchangeFail.inc();
-        return reject();
+        return reject(error);
     } else {
       logger.info('Instagram info fetched', {
         body: JSON.parse(body)
