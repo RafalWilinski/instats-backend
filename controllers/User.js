@@ -103,7 +103,7 @@ const getUserInfo = (req, res) => {
     });
   } else {
     postgres('small_profiles')
-      .select('username', 'profile_picture')
+      .select('username', 'profile_picture', 'instagram_id')
       .where({
         instagram_id: req.query.id
       })
@@ -148,7 +148,7 @@ const getUserInfoBatch = (req, res) => {
       error: 'ids not provided'
     });
   } else {
-    postgres('small_profiles').select('username', 'profile_picture')
+    postgres('small_profiles').select('username', 'profile_picture', 'instagram_id')
       .whereIn({
         instagram_id: req.query.ids
       })
