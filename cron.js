@@ -167,26 +167,24 @@ const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((
 });
 
 const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reject) => {
+  console.log('Inserting small profiles');
   const userIds = usersArray.map((user) => user.id);
+
+  const difference = (newData, oldData) => {
+    return newData.filter((newEntry) => {
+      return oldData.filter((oldEntry) => oldEntry.instagram_id === newEntry.id).length === 0;
+    });
+  };
 
   postgres('small_profiles')
     .select('instagram_id')
     .whereIn('instagram_id', userIds)
     .then((data) => {
-      metrics.spDuplicate.inc(data.length);
       insert(difference(usersArray, data));
     })
     .catch((error) => {
       logger.warn('Failed to enter small profile', error);
     });
-
-  const difference = (array_1, array_2) => {
-    return array_1.filter((obj) => {
-      return !array_2.some((obj2) => {
-        return obj.value == obj2.value;
-      });
-    });
-  };
 
   const insert = (users) => {
     if (users.length > 0) {

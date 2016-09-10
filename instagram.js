@@ -120,7 +120,7 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     count: defaultFetchCount,
     sig
   })}`;
-  
+
   return fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
     metrics.followersSuccess.inc();
     return resolve(followersArray);
@@ -156,7 +156,7 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
     sig
   })}`;
 
-  fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
+  return fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
     metrics.followsSuccess.inc();
     return resolve(followsArray);
   }).catch((error) => {
@@ -223,6 +223,43 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
       metrics.fetchUserFail.inc();
       return reject();
     });
+});
+
+const fetchPhotos = (instagramId, access_token) => new Promise((resolve, reject) => {
+  const sig = generateSignature(`/users/self/media/recent`, {
+    count: 100,
+    access_token
+  });
+
+  const fullUrl = `${config('instagram_base_url')}/users/self/media/recent?${jsonToParams({
+    access_token,
+    count: 100,
+    sig
+  })}`;
+
+  return axios.get(fullUrl).then((payload) => {
+    if (payload.data.meta.code === 200) {
+      return resolve(payload.data);
+    } else {
+      logger.warn('[fetchPhotos] Instagram API returned non-200 status code', {
+        access_token,
+        sig,
+        status: payload.status,
+        data: payload.data,
+        headers: payload.headers
+      });
+
+      return reject();
+    }
+  }).catch((error) => {
+    logger.error('Failed to fetch instagram user photos', {
+      status: error.status,
+      sig,
+      access_token
+    });
+
+    return reject();
+  });
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
@@ -307,6 +344,7 @@ module.exports = {
   fetchFollowings,
   fetchProfile,
   fetchStats,
+  fetchPhotos,
   exchangeToken,
   generateSignature,
   getJsonFromUrlParams,

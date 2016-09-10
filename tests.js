@@ -75,7 +75,6 @@ describe('Instagram API Tests', () => {
 });
 
 describe('API Integration Tests', () => {
-
   before((done) => {
     postgres('users')
       .where({
@@ -88,7 +87,7 @@ describe('API Integration Tests', () => {
       .catch(() => {
         throw new Error();
       });
-  })
+  });
 
   it('Healthcheck responds OK status', (done) => {
     request(app)
