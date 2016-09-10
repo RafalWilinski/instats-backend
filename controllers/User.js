@@ -103,7 +103,7 @@ const getUserInfo = (req, res) => {
     });
   } else {
     postgres('small_profiles')
-      .select('*')
+      .select('username', 'profile_picture')
       .where({
         instagram_id: req.query.id
       })
@@ -137,6 +137,48 @@ const getUserInfo = (req, res) => {
         res.status(404);
         return res.json({
           error: 'user not found'
+        });
+      });
+  }
+};
+
+const getUserInfoBatch = (req, res) => {
+  if (req.query.ids === null || req.query.access_token === null) {
+    res.status(400);
+    return res.json({
+      error: 'id or access_token not provided'
+    });
+  } else {
+    postgres('small_profiles').select('username', 'profile_picture')
+      .whereIn({
+        instagram_id: req.query.ids
+      })
+      .then((users) => {
+        if (users) {
+          res.status(200);
+          return res.json({
+            response: { meta: { code: 200 } },
+            data: users,
+          });
+        } else {
+          logger.warn('Users not found in small profiles!');
+
+          res.status(404);
+          return res.json({
+            error: 'users not found'
+          });
+        }
+      })
+      .catch((error) => {
+        logger.error('Error while executing getUserInfoBatch query', {
+          error,
+          ids: req.query.ids,
+          access_token: req.query.access_token
+        });
+
+        res.status(404);
+        return res.json({
+          error: 'users not found'
         });
       });
   }
@@ -358,6 +400,7 @@ module.exports = {
   getFollowings,
   getStats,
   getUserInfo,
+  getUserInfoBatch,
   isUserRegistered,
   promoteUser,
   registerUser,
