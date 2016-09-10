@@ -96,10 +96,10 @@ const getStats = (req, res) => {
 };
 
 const getUserInfo = (req, res) => {
-  if (req.query.id == null || req.query.access_token == null) {
+  if (req.query.id == null) {
     res.status(400);
     return res.json({
-      error: 'id or access_token not provided'
+      error: 'id not provided'
     });
   } else {
     postgres('small_profiles')
@@ -131,7 +131,6 @@ const getUserInfo = (req, res) => {
         logger.error('Error while executing getUserInfo query', {
           err,
           id: req.query.id,
-          access_token: req.query.access_token
         });
 
         res.status(404);
@@ -143,10 +142,10 @@ const getUserInfo = (req, res) => {
 };
 
 const getUserInfoBatch = (req, res) => {
-  if (req.query.ids === null || req.query.access_token === null) {
+  if (req.query.ids === null) {
     res.status(400);
     return res.json({
-      error: 'id or access_token not provided'
+      error: 'ids not provided'
     });
   } else {
     postgres('small_profiles').select('username', 'profile_picture')
@@ -173,7 +172,6 @@ const getUserInfoBatch = (req, res) => {
         logger.error('Error while executing getUserInfoBatch query', {
           error,
           ids: req.query.ids,
-          access_token: req.query.access_token
         });
 
         res.status(404);
