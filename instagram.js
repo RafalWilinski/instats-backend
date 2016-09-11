@@ -115,34 +115,27 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
 });
 
 const fetchPhotos = (id, instagramId, access_token) => new Promise((resolve, reject) => {
-  const sig = generateSignature(`/users/self/media/recent`, {
-    count: 5,
+  const path = `/users/${instagramId}/media/recent`;
+  const sig = generateSignature(path, {
+    count: defaultFetchCount,
     access_token
   });
 
-  const fullUrl = `${config('instagram_base_url')}/users/self/media/recent?${jsonToParams({
+  const fullUrl = `${config('instagram_base_url')}${path}?${jsonToParams({
     access_token,
-    count: 5,
+    count: defaultFetchCount,
     sig
   })}`;
 
-  return fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
-    return resolve(followsArray);
+  return fetchPaginatedData(fullUrl, path, [], id).then((photos) => {
+    return resolve(photos);
   }).catch((error) => {
     logger.error('failed to fetch photos', {
-      id, instagramId, fullUrl, path, error: error.data
+      id, instagramId, fullUrl, error: error.data
     });
 
     return reject();
   });
-});
-
-fetchPhotos('263242461', '263242461.a79e8ef.9c186a2ce22e47da876b3a6e374773a5').then((result) => {
-  result.data.forEach((photo) => {
-    console.log(photo);
-  })
-}).catch((error) => {
-  console.log(error);
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {

@@ -36,7 +36,8 @@ const modifyPaginationUrl = (fullUrl, apiPath) => {
   delete urlParamsAsJson['sig'];
 
   const signature = generateSignature(apiPath, urlParamsAsJson);
-  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
+  const newUrl = fullUrl.replace(/&sig(.*?)&/, `&sig=${signature}&`);
+  // const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
 
   logger.info('Pagination url generated', { fullUrl, newUrl, signature });
   return newUrl;
@@ -67,7 +68,7 @@ const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise
         } else {
           const array = accumulator.concat(payload.data.data);
           logger.info('Pagination end reached', {
-            array,
+            count: array.length,
             path,
             dbUserId
           });
