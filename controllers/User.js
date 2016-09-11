@@ -148,10 +148,11 @@ const getUserInfoBatch = (req, res) => {
       error: 'ids not provided'
     });
   } else {
-    postgres('small_profiles').select('username', 'profile_picture', 'instagram_id')
-      .whereIn({
-        instagram_id: req.query.ids
-      })
+    const array = req.query.ids.split(',').filter((id) => id);
+    postgres('small_profiles').select('name', 'picture_url', 'instagram_id')
+      .whereIn(
+        'instagram_id', array
+      )
       .then((users) => {
         if (users) {
           res.status(200);
@@ -176,7 +177,7 @@ const getUserInfoBatch = (req, res) => {
 
         res.status(404);
         return res.json({
-          error: 'users not found'
+          error: 'users not found:err'
         });
       });
   }
