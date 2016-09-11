@@ -148,7 +148,7 @@ const getUserInfoBatch = (req, res) => {
       error: 'ids not provided'
     });
   } else {
-    const array = req.query.ids.split(',').filter((id) => id);
+    const array = Array.from(new Set(req.query.ids.split(',').filter((id) => id)));
     postgres('small_profiles').select('name', 'picture_url', 'instagram_id')
       .whereIn(
         'instagram_id', array
