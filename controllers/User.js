@@ -334,7 +334,7 @@ const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
 );
 
 const promoteUser = (req, res) => {
-  if (req.body.id == null) {
+  if (req.body.id === null) {
     res.status(400);
     return res.json({
       error: 'id not provided'

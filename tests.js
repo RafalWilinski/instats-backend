@@ -13,7 +13,7 @@ const cron = require('./cron');
 const UserController = require('./controllers/User');
 const helpers = require('./helpers');
 
-const testId = 4;
+const testId = config('test_user_id');
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
 const testInstagramUsername = config('instagram_test_username');
@@ -403,7 +403,7 @@ describe('Cron Integration Tests', () => {
 
 describe('Unit Utils Tests', () => {
   it('Generates correct signature', (done) => {
-    const expectedSignature = '648dccf1260a0bfa123fea3b1d88c1d8eb16bc9bc096543abead456587f54452';
+    const expectedSignature = '3bf4811eae70e4f4309ef7f9c451af0b3a8f33db0258241272f7e796102d34e5';
     const sig = helpers.generateSignature('/users/self', {
       access_token: testInstagramAccessToken
     });
