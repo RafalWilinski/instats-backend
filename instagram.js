@@ -6,7 +6,6 @@ const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
 const metrics = require('./metrics');
-const UserController = require('./controllers/User');
 const request = require('request');
 const helpers = require('./helpers');
 

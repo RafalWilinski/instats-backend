@@ -1,4 +1,6 @@
 'use strict';
+const axios = require('axios');
+const crypto = require('crypto');
 const metrics = require('./metrics');
 const logger = require('./log');
 const config = require('./config.js');

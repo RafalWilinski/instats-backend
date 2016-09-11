@@ -11,6 +11,7 @@ const app = require('./app');
 const instagramApi = require('./instagram');
 const cron = require('./cron');
 const UserController = require('./controllers/User');
+const helpers = require('./helpers');
 
 const testId = 4;
 const testInstagramId = config('instagram_test_id');
@@ -97,24 +98,6 @@ describe('API Integration Tests', () => {
         if (err) throw new Error(err);
         done();
       })
-  });
-
-  it('Fails to fetch smart profile if access_token is not supplied', (done) => {
-    const url = `/api/get_user_info?id=${testInstagramId}`;
-    request(app)
-      .get(url)
-      .expect(400, done);
-  });
-
-  it('Fetches smart profile', (done) => {
-    const url = `/api/get_user_info?id=${testInstagramId}&access_token=${testInstagramAccessToken}`;
-    request(app)
-      .get(url)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body.data.username).to.be.equal(testInstagramUsername);
-        done();
-      });
   });
 
   it('Failes to fetch followers without id', (done) => {
@@ -421,7 +404,7 @@ describe('Cron Integration Tests', () => {
 describe('Unit Utils Tests', () => {
   it('Generates correct signature', (done) => {
     const expectedSignature = '648dccf1260a0bfa123fea3b1d88c1d8eb16bc9bc096543abead456587f54452';
-    const sig = instagramApi.generateSignature('/users/self', {
+    const sig = helpers.generateSignature('/users/self', {
       access_token: testInstagramAccessToken
     });
 
@@ -432,7 +415,7 @@ describe('Unit Utils Tests', () => {
 
   it('Computes proper JSON from URL', (done) => {
     const urlParams = "?id=123&message=ok";
-    const json = instagramApi.getJsonFromUrlParams(urlParams);
+    const json = helpers.getJsonFromUrlParams(urlParams);
 
     expect(json.message).to.be.equal('ok');
 
@@ -445,7 +428,7 @@ describe('Unit Utils Tests', () => {
       message: 'ok'
     };
 
-    const params = instagramApi.jsonToParams(json);
+    const params = helpers.jsonToParams(json);
 
     expect(params).to.be.equal('id=123&message=ok');
     done();
