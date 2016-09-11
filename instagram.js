@@ -8,105 +8,13 @@ const logger = require('./log');
 const metrics = require('./metrics');
 const UserController = require('./controllers/User');
 const request = require('request');
+const helpers = require('./helpers');
+
+const generateSignature = helpers.generateSignature;
+const fetchPaginatedData = helpers.fetchPaginatedData;
+const jsonToParams = helpers.jsonToParams;
 
 const defaultFetchCount = config('default_fetch_count');
-
-const generateSignature = (endpoint, params) => {
-  var query = endpoint;
-  const ordered = {};
-
-  Object.keys(params).sort().forEach((key) => {
-    ordered[key] = params[key];
-  });
-
-  for (var param in ordered) {
-    query += '|' + param + '=' + ordered[param];
-  }
-  return crypto.createHmac("sha256", config('instagram_client_secret')).update(query).digest("hex");
-};
-
-const getJsonFromUrlParams = (query) => {
-  const result = {};
-  query = query.split('?')[1];
-  query.split('&').forEach((part) => {
-    var item = part.split("=");
-    result[item[0]] = decodeURIComponent(item[1]);
-  });
-
-  return result;
-};
-
-const modifyPaginationUrl = (fullUrl, apiPath) => {
-  const urlParamsAsJson = getJsonFromUrlParams(fullUrl);
-  delete urlParamsAsJson['sig'];
-
-  const signature = generateSignature(apiPath, urlParamsAsJson);
-  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
-
-  logger.info('Pagination url generated', { fullUrl, newUrl, signature });
-  return newUrl;
-};
-
-const jsonToParams = (data) => Object.keys(data).map((k) => {
-  return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
-}).join('&');
-
-const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise((resolve, reject) => {
-  return axios.get(fullUrl)
-    .then((payload) => {
-      if (payload.data.meta.code === 200) {
-
-        if (payload.data.hasOwnProperty('pagination') &&
-          payload.data.pagination.hasOwnProperty('next_url')) {
-
-          const paginationUrl = modifyPaginationUrl(payload.data.pagination.next_url, path);
-          logger.info('Fetching paginated data', {
-            paginationUrl,
-            fullUrl,
-            path
-          });
-
-          metrics.paginationSuccess.inc();
-          return resolve(fetchPaginatedData(paginationUrl, path, accumulator.concat(payload.data.data), dbUserId));
-
-        } else {
-          const array = accumulator.concat(payload.data.data);
-          logger.info('Pagination end reached', {
-            array,
-            path,
-            dbUserId
-          });
-
-          metrics.paginationSuccess.inc();
-          return resolve(array);
-        }
-
-      } else {
-        logger.warn('Instagram API returned non-200 status code (paginated)', {
-          fullUrl,
-          path,
-          status: payload.status,
-          data: payload.data,
-          headers: payload.headers
-        });
-
-        metrics.paginationFail.inc();
-        return reject();
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      logger.warn('Instagram API error (paginated)', {
-        fullUrl,
-        path,
-        dbUserId,
-        error: error.data
-      });
-
-      metrics.paginationFail.inc();
-      return reject(error.data);
-    });
-});
 
 const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const path = `/users/${instagramId}/followed-by`;
@@ -128,15 +36,6 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     logger.error('failed to fetch followers', {
       id, instagramId, fullUrl, path, error
     });
-
-    if (error.meta.error_type === 'OAuthAccessTokenException') {
-      logger.info('Invalidating user', {
-        id
-      });
-
-      metrics.oauthExceptions.inc();
-      UserController.invalidateAccessToken(id);
-    }
 
     metrics.followersFail.inc();
     return reject();
@@ -163,15 +62,6 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
     logger.error('failed to fetch followings', {
       id, instagramId, fullUrl, path, error: error.data
     });
-
-    if (error.meta.error_type === 'OAuthAccessTokenException') {
-      logger.info('Invalidating user', {
-        id
-      });
-
-      metrics.oauthExceptions.inc();
-      UserController.invalidateAccessToken(id);
-    }
 
     metrics.followsFail.inc();
     return reject();
@@ -225,41 +115,35 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
     });
 });
 
-const fetchPhotos = (instagramId, access_token) => new Promise((resolve, reject) => {
+const fetchPhotos = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const sig = generateSignature(`/users/self/media/recent`, {
-    count: 100,
+    count: 5,
     access_token
   });
 
   const fullUrl = `${config('instagram_base_url')}/users/self/media/recent?${jsonToParams({
     access_token,
-    count: 100,
+    count: 5,
     sig
   })}`;
 
-  return axios.get(fullUrl).then((payload) => {
-    if (payload.data.meta.code === 200) {
-      return resolve(payload.data);
-    } else {
-      logger.warn('[fetchPhotos] Instagram API returned non-200 status code', {
-        access_token,
-        sig,
-        status: payload.status,
-        data: payload.data,
-        headers: payload.headers
-      });
-
-      return reject();
-    }
+  return fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
+    return resolve(followsArray);
   }).catch((error) => {
-    logger.error('Failed to fetch instagram user photos', {
-      status: error.status,
-      sig,
-      access_token
+    logger.error('failed to fetch photos', {
+      id, instagramId, fullUrl, path, error: error.data
     });
 
     return reject();
   });
+});
+
+fetchPhotos('263242461', '263242461.a79e8ef.9c186a2ce22e47da876b3a6e374773a5').then((result) => {
+  result.data.forEach((photo) => {
+    console.log(photo);
+  })
+}).catch((error) => {
+  console.log(error);
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
@@ -346,7 +230,4 @@ module.exports = {
   fetchStats,
   fetchPhotos,
   exchangeToken,
-  generateSignature,
-  getJsonFromUrlParams,
-  jsonToParams
 };
