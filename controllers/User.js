@@ -141,6 +141,36 @@ const getUserInfo = (req, res) => {
   }
 };
 
+const getPhotos = (req, res) => {
+  if (req.query.userId === null) {
+    res.status(400);
+    return res.json({
+      error: 'id not provided',
+    });
+  } else {
+    postgres.photos('photos')
+      .select('*')
+      .where({
+        user: req.query.userId,
+      })
+      .then((photos) => {
+        res.status(200);
+        return res.json(photos);
+      })
+      .catch((error) => {
+        logger.error('Error while executing getPhotos query', {
+          error,
+          userId: req.query.userId,
+        });
+
+        res.status(404);
+        return res.json({
+          error: 'user not found'
+        });
+      });
+  }
+};
+
 const getUserInfoBatch = (req, res) => {
   if (req.query.ids === null) {
     res.status(400);
