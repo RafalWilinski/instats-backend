@@ -148,7 +148,7 @@ const getPhotos = (req, res) => {
       error: 'id not provided',
     });
   } else {
-    postgres.photos('photos')
+    postgres('photos')
       .select('*')
       .where({
         user: req.query.userId,
@@ -167,6 +167,30 @@ const getPhotos = (req, res) => {
         return res.json({
           error: 'user not found'
         });
+      });
+  }
+};
+
+const getPhotoAnalytics = (req, res) => {
+  if (req.query.id == null) {
+    res.status(400);
+    return res.json({
+      error: 'id not provided',
+    });
+  } else {
+    postgres('photos')
+      .select('*')
+      .where({
+        id: req.query.id
+      })
+      .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
+      .then((data) => {
+        res.status(200);
+        return res.json(data);
+      })
+      .catch((error) => {
+        res.status(404);
+        return res.json(error);
       });
   }
 };
@@ -428,6 +452,8 @@ module.exports = {
   getFollowers,
   getFollowings,
   getStats,
+  getPhotos,
+  getPhotoAnalytics,
   getUserInfo,
   getUserInfoBatch,
   isUserRegistered,
