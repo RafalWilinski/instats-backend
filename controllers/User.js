@@ -96,14 +96,14 @@ const getStats = (req, res) => {
 };
 
 const getUserInfo = (req, res) => {
-  if (req.query.id == null || req.query.access_token == null) {
+  if (req.query.id == null) {
     res.status(400);
     return res.json({
-      error: 'id or access_token not provided'
+      error: 'id not provided'
     });
   } else {
     postgres('small_profiles')
-      .select('*')
+      .select('username', 'profile_picture', 'instagram_id')
       .where({
         instagram_id: req.query.id
       })
@@ -131,12 +131,107 @@ const getUserInfo = (req, res) => {
         logger.error('Error while executing getUserInfo query', {
           err,
           id: req.query.id,
-          access_token: req.query.access_token
         });
 
         res.status(404);
         return res.json({
           error: 'user not found'
+        });
+      });
+  }
+};
+
+const getPhotos = (req, res) => {
+  if (req.query.userId === null) {
+    res.status(400);
+    return res.json({
+      error: 'id not provided',
+    });
+  } else {
+    postgres('photos')
+      .select('*')
+      .where({
+        user: req.query.userId,
+      })
+      .then((photos) => {
+        res.status(200);
+        return res.json(photos);
+      })
+      .catch((error) => {
+        logger.error('Error while executing getPhotos query', {
+          error,
+          userId: req.query.userId,
+        });
+
+        res.status(404);
+        return res.json({
+          error: 'user not found'
+        });
+      });
+  }
+};
+
+const getPhotoAnalytics = (req, res) => {
+  if (req.query.id == null) {
+    res.status(400);
+    return res.json({
+      error: 'id not provided',
+    });
+  } else {
+    postgres('photos')
+      .select('*')
+      .where({
+        id: req.query.id
+      })
+      .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
+      .then((data) => {
+        res.status(200);
+        return res.json(data);
+      })
+      .catch((error) => {
+        res.status(404);
+        return res.json(error);
+      });
+  }
+};
+
+const getUserInfoBatch = (req, res) => {
+  if (req.query.ids === null) {
+    res.status(400);
+    return res.json({
+      error: 'ids not provided'
+    });
+  } else {
+    const array = Array.from(new Set(req.query.ids.split(',').filter((id) => id)));
+    postgres('small_profiles').select('name', 'picture_url', 'instagram_id')
+      .whereIn(
+        'instagram_id', array
+      )
+      .then((users) => {
+        if (users) {
+          res.status(200);
+          return res.json({
+            response: { meta: { code: 200 } },
+            data: users,
+          });
+        } else {
+          logger.warn('Users not found in small profiles!');
+
+          res.status(404);
+          return res.json({
+            error: 'users not found'
+          });
+        }
+      })
+      .catch((error) => {
+        logger.error('Error while executing getUserInfoBatch query', {
+          error,
+          ids: req.query.ids,
+        });
+
+        res.status(404);
+        return res.json({
+          error: 'users not found:err'
         });
       });
   }
@@ -294,7 +389,7 @@ const isUserRegistered = (instagram_id) => new Promise((resolve, reject) =>
 );
 
 const promoteUser = (req, res) => {
-  if (req.body.id == null) {
+  if (req.body.id === null) {
     res.status(400);
     return res.json({
       error: 'id not provided'
@@ -358,7 +453,10 @@ module.exports = {
   getFollowers,
   getFollowings,
   getStats,
+  getPhotos,
+  getPhotoAnalytics,
   getUserInfo,
+  getUserInfoBatch,
   isUserRegistered,
   promoteUser,
   registerUser,

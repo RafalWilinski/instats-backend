@@ -7,6 +7,9 @@ const metrics = require('./metrics');
 
 const instagram = require('./instagram');
 
+const FOLLOWERS_ARRAYS = 'followers_arrays';
+const FOLLOWINGS_ARRAYS = 'followings_arrays';
+
 const startCrons = (postgres) => {
   normalUsersCron(postgres);
   premiumUsersCron(postgres);
@@ -37,16 +40,22 @@ const premiumUsersCron = (postgres) => {
 
 const fetchUsersAndFollows = (postgres, isPremium) => {
   fetchUsers(postgres, isPremium).then((users) => {
+    logger.info('Processing users CRON', {
+      count: users.length,
+      isPremium,
+    });
+
     for (var i = 0; i < users.length; i++) {
-      fetchFollows(users[i], i);
+      fetchData(users[i], i);
     }
   });
 
-  const fetchFollows = (user, i) => {
+  const fetchData = (user, i) => {
+    console.log('fetching');
     setTimeout(() => {
       instagram.fetchFollowers(user.id, user.instagram_id, user.access_token)
         .then((followersArray) => {
-          insertArray(user.id, followersArray, true, postgres);
+          insertArray(user.id, followersArray, FOLLOWERS_ARRAYS, postgres);
           insertSmallProfiles(followersArray, postgres);
         })
         .catch(() => {
@@ -55,11 +64,24 @@ const fetchUsersAndFollows = (postgres, isPremium) => {
 
       instagram.fetchFollowings(user.id, user.instagram_id, user.access_token)
         .then((followsArray) => {
-          insertArray(user.id, followsArray, false, postgres);
+          insertArray(user.id, followsArray, FOLLOWINGS_ARRAYS, postgres);
           insertSmallProfiles(followsArray, postgres);
         })
         .catch(() => {
           logger.error('failed to fetch follows');
+        });
+
+      instagram.fetchPhotos(user.id, user.instagram_id, user.access_token)
+        .then((photos) => {
+          logger.info('Processing photos of user', {
+            userId: user.id,
+            count: photos.length,
+          });
+
+          insertPhotoAndCounts(user.id, photos, postgres);
+        })
+        .catch(() => {
+          logger.error('failed to insert photos');
         });
     }, i * 500);
   }
@@ -134,8 +156,79 @@ const deleteOldData = (postgres) => new Promise((resolve, reject) => {
   }
 });
 
-const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((resolve, reject) => {
-  const tableName = isFollowers ? 'followers_arrays' : 'followings_arrays';
+const insertPhotoAndCounts = (userId, photos, postgres) => new Promise((resolve, reject) => {
+  const difference = (newData, oldData) => {
+    return newData.filter((newEntry) => {
+      return oldData.filter((oldEntry) => oldEntry.instagram_photo_id === newEntry.id).length === 0;
+    });
+  };
+
+  const insert = (photos) => new Promise((resolve, reject) => {
+    if (photos.length > 0) {
+      logger.info('Inserting photos', {
+        count: photos.length
+      });
+
+      const insertablePhotos = photos.map((photo) => {
+        return {
+          instagram_photo_id: photo.id,
+          timestamp: moment.unix(photo.created_time),
+          tags: photo.tags,
+          thumbnail_url: photo.images.thumbnail.url,
+          original_url: photo.images.standard_resolution.url,
+          filter: photo.filter,
+          location: photo.location,
+          user: userId
+        };
+      });
+
+      postgres('photos')
+        .insert(
+          insertablePhotos
+        )
+        .then((data) => {
+          logger.info('Photos inserted', data);
+          return resolve();
+        })
+        .catch((error) => {
+          logger.warn('Failed to enter photo', error);
+          return reject(error);
+        });
+    } else {
+      logger.info('No new photos to insert');
+      return resolve();
+    }
+  });
+
+  const insertCounts = (userId, photos, postgres) => {
+    const insertables = photos.map((photo) => ({
+      photo: photo.id,
+      likes: photo.likes.count,
+      timestamp: new Date().toUTCString()
+    }));
+
+    postgres('photos_likes').insert(insertables)
+      .then((data) => logger.info('photos likes inserted', data))
+      .catch((error) => logger.error('failed to save photo likes', {error}));
+  };
+
+  postgres('photos')
+    .select('instagram_photo_id')
+    .whereIn('instagram_photo_id', photos.map((entry) => entry.id))
+    .then((data) => {
+      logger.info('Duplicate photos', { count: data.length });
+      insert(difference(photos, data)).then(() => {
+        insertCounts(userId, photos, postgres);
+      }).catch((error) => {
+        return reject(error);
+      });
+    }).catch((error) => {
+      logger.error('Failed to find duplicate photos and compute difference', { error });
+      return reject(error);
+    });
+});
+
+const insertArray = (userId, usersArray, tableName, postgres) => new Promise((resolve, reject) => {
   const array = `{${usersArray.map((user) => user.id)}}`;
   postgres(tableName)
     .insert({
@@ -167,26 +260,24 @@ const insertArray = (userId, usersArray, isFollowers, postgres) => new Promise((
 });
 
 const insertSmallProfiles = (usersArray, postgres) => new Promise((resolve, reject) => {
+  console.log('Inserting small profiles');
   const userIds = usersArray.map((user) => user.id);
+
+  const difference = (newData, oldData) => {
+    return newData.filter((newEntry) => {
+      return oldData.filter((oldEntry) => oldEntry.instagram_id === newEntry.id).length === 0;
+    });
+  };
 
   postgres('small_profiles')
     .select('instagram_id')
     .whereIn('instagram_id', userIds)
     .then((data) => {
-      metrics.spDuplicate.inc(data.length);
       insert(difference(usersArray, data));
     })
     .catch((error) => {
       logger.warn('Failed to enter small profile', error);
     });
-
-  const difference = (array_1, array_2) => {
-    return array_1.filter((obj) => {
-      return !array_2.some((obj2) => {
-        return obj.value == obj2.value;
-      });
-    });
-  };
 
   const insert = (users) => {
     if (users.length > 0) {

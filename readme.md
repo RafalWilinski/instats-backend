@@ -1,6 +1,6 @@
 ### Instats Backend v2 (rewrite)
 
-[![Build Status](https://img.shields.io/circleci/project/RafalWilinski/instats-backend/master.svg?style=flat-square "Build Status")](https://circleci.com/gh/dokku/dokku/tree/master) 
+[![Build Status](https://circleci.com/gh/RafalWilinski/instats-backend.svg?style=shield&circle-token=:circle-token "Build Status")](https://circleci.com/gh/RafalWilinski/instats-backend/tree/master) 
 
 [![Coverage Status](https://coveralls.io/repos/github/RafalWilinski/instats-backend/badge.svg?branch=master)](https://coveralls.io/github/RafalWilinski/instats-backend?branch=master)
 

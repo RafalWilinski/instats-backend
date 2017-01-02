@@ -11,8 +11,9 @@ const app = require('./app');
 const instagramApi = require('./instagram');
 const cron = require('./cron');
 const UserController = require('./controllers/User');
+const helpers = require('./helpers');
 
-const testId = 4;
+const testId = config('test_user_id');
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
 const testInstagramUsername = config('instagram_test_username');
@@ -75,7 +76,6 @@ describe('Instagram API Tests', () => {
 });
 
 describe('API Integration Tests', () => {
-
   before((done) => {
     postgres('users')
       .where({
@@ -88,7 +88,7 @@ describe('API Integration Tests', () => {
       .catch(() => {
         throw new Error();
       });
-  })
+  });
 
   it('Healthcheck responds OK status', (done) => {
     request(app)
@@ -98,24 +98,6 @@ describe('API Integration Tests', () => {
         if (err) throw new Error(err);
         done();
       })
-  });
-
-  it('Fails to fetch smart profile if access_token is not supplied', (done) => {
-    const url = `/api/get_user_info?id=${testInstagramId}`;
-    request(app)
-      .get(url)
-      .expect(400, done);
-  });
-
-  it('Fetches smart profile', (done) => {
-    const url = `/api/get_user_info?id=${testInstagramId}&access_token=${testInstagramAccessToken}`;
-    request(app)
-      .get(url)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body.data.username).to.be.equal(testInstagramUsername);
-        done();
-      });
   });
 
   it('Failes to fetch followers without id', (done) => {
@@ -421,8 +403,8 @@ describe('Cron Integration Tests', () => {
 
 describe('Unit Utils Tests', () => {
   it('Generates correct signature', (done) => {
-    const expectedSignature = '648dccf1260a0bfa123fea3b1d88c1d8eb16bc9bc096543abead456587f54452';
-    const sig = instagramApi.generateSignature('/users/self', {
+    const expectedSignature = '3bf4811eae70e4f4309ef7f9c451af0b3a8f33db0258241272f7e796102d34e5';
+    const sig = helpers.generateSignature('/users/self', {
       access_token: testInstagramAccessToken
     });
 
@@ -433,7 +415,7 @@ describe('Unit Utils Tests', () => {
 
   it('Computes proper JSON from URL', (done) => {
     const urlParams = "?id=123&message=ok";
-    const json = instagramApi.getJsonFromUrlParams(urlParams);
+    const json = helpers.getJsonFromUrlParams(urlParams);
 
     expect(json.message).to.be.equal('ok');
 
@@ -446,7 +428,7 @@ describe('Unit Utils Tests', () => {
       message: 'ok'
     };
 
-    const params = instagramApi.jsonToParams(json);
+    const params = helpers.jsonToParams(json);
 
     expect(params).to.be.equal('id=123&message=ok');
     done();

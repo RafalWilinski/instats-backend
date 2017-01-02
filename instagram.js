@@ -6,107 +6,14 @@ const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
 const metrics = require('./metrics');
-const UserController = require('./controllers/User');
 const request = require('request');
+const helpers = require('./helpers');
+
+const generateSignature = helpers.generateSignature;
+const fetchPaginatedData = helpers.fetchPaginatedData;
+const jsonToParams = helpers.jsonToParams;
 
 const defaultFetchCount = config('default_fetch_count');
-
-const generateSignature = (endpoint, params) => {
-  var query = endpoint;
-  const ordered = {};
-
-  Object.keys(params).sort().forEach((key) => {
-    ordered[key] = params[key];
-  });
-
-  for (var param in ordered) {
-    query += '|' + param + '=' + ordered[param];
-  }
-  return crypto.createHmac("sha256", config('instagram_client_secret')).update(query).digest("hex");
-};
-
-const getJsonFromUrlParams = (query) => {
-  const result = {};
-  query = query.split('?')[1];
-  query.split('&').forEach((part) => {
-    var item = part.split("=");
-    result[item[0]] = decodeURIComponent(item[1]);
-  });
-
-  return result;
-};
-
-const modifyPaginationUrl = (fullUrl, apiPath) => {
-  const urlParamsAsJson = getJsonFromUrlParams(fullUrl);
-  delete urlParamsAsJson['sig'];
-
-  const signature = generateSignature(apiPath, urlParamsAsJson);
-  const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
-
-  logger.info('Pagination url generated', { fullUrl, newUrl, signature });
-  return newUrl;
-};
-
-const jsonToParams = (data) => Object.keys(data).map((k) => {
-  return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
-}).join('&');
-
-const fetchPaginatedData = (fullUrl, path, accumulator, dbUserId) => new Promise((resolve, reject) => {
-  return axios.get(fullUrl)
-    .then((payload) => {
-      if (payload.data.meta.code === 200) {
-
-        if (payload.data.hasOwnProperty('pagination') &&
-          payload.data.pagination.hasOwnProperty('next_url')) {
-
-          const paginationUrl = modifyPaginationUrl(payload.data.pagination.next_url, path);
-          logger.info('Fetching paginated data', {
-            paginationUrl,
-            fullUrl,
-            path
-          });
-
-          metrics.paginationSuccess.inc();
-          return resolve(fetchPaginatedData(paginationUrl, path, accumulator.concat(payload.data.data), dbUserId));
-
-        } else {
-          const array = accumulator.concat(payload.data.data);
-          logger.info('Pagination end reached', {
-            array,
-            path,
-            dbUserId
-          });
-
-          metrics.paginationSuccess.inc();
-          return resolve(array);
-        }
-
-      } else {
-        logger.warn('Instagram API returned non-200 status code (paginated)', {
-          fullUrl,
-          path,
-          status: payload.status,
-          data: payload.data,
-          headers: payload.headers
-        });
-
-        metrics.paginationFail.inc();
-        return reject();
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      logger.warn('Instagram API error (paginated)', {
-        fullUrl,
-        path,
-        dbUserId,
-        error: error.data
-      });
-
-      metrics.paginationFail.inc();
-      return reject(error.data);
-    });
-});
 
 const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, reject) => {
   const path = `/users/${instagramId}/followed-by`;
@@ -120,7 +27,7 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     count: defaultFetchCount,
     sig
   })}`;
-  
+
   return fetchPaginatedData(fullUrl, path, [], id).then((followersArray) => {
     metrics.followersSuccess.inc();
     return resolve(followersArray);
@@ -128,15 +35,6 @@ const fetchFollowers = (id, instagramId, access_token) => new Promise((resolve, 
     logger.error('failed to fetch followers', {
       id, instagramId, fullUrl, path, error
     });
-
-    if (error.meta.error_type === 'OAuthAccessTokenException') {
-      logger.info('Invalidating user', {
-        id
-      });
-
-      metrics.oauthExceptions.inc();
-      UserController.invalidateAccessToken(id);
-    }
 
     metrics.followersFail.inc();
     return reject();
@@ -156,22 +54,13 @@ const fetchFollowings = (id, instagramId, access_token) => new Promise((resolve,
     sig
   })}`;
 
-  fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
+  return fetchPaginatedData(fullUrl, path, [], id).then((followsArray) => {
     metrics.followsSuccess.inc();
     return resolve(followsArray);
   }).catch((error) => {
     logger.error('failed to fetch followings', {
       id, instagramId, fullUrl, path, error: error.data
     });
-
-    if (error.meta.error_type === 'OAuthAccessTokenException') {
-      logger.info('Invalidating user', {
-        id
-      });
-
-      metrics.oauthExceptions.inc();
-      UserController.invalidateAccessToken(id);
-    }
 
     metrics.followsFail.inc();
     return reject();
@@ -223,6 +112,30 @@ const fetchProfile = (instagramId, access_token) => new Promise((resolve, reject
       metrics.fetchUserFail.inc();
       return reject();
     });
+});
+
+const fetchPhotos = (id, instagramId, access_token) => new Promise((resolve, reject) => {
+  const path = `/users/${instagramId}/media/recent`;
+  const sig = generateSignature(path, {
+    count: defaultFetchCount,
+    access_token
+  });
+
+  const fullUrl = `${config('instagram_base_url')}${path}?${jsonToParams({
+    access_token,
+    count: defaultFetchCount,
+    sig
+  })}`;
+
+  return fetchPaginatedData(fullUrl, path, [], id).then((photos) => {
+    return resolve(photos);
+  }).catch((error) => {
+    logger.error('failed to fetch photos', {
+      id, instagramId, fullUrl, error: error.data
+    });
+
+    return reject();
+  });
 });
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
@@ -307,8 +220,6 @@ module.exports = {
   fetchFollowings,
   fetchProfile,
   fetchStats,
+  fetchPhotos,
   exchangeToken,
-  generateSignature,
-  getJsonFromUrlParams,
-  jsonToParams
 };
