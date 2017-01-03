@@ -9,7 +9,6 @@ const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
-const cron = require('./cron');
 const UserController = require('./controllers/User');
 const helpers = require('./helpers');
 
@@ -33,28 +32,6 @@ describe('Instagram API Tests', () => {
     instagramApi.fetchStats(testInstagramAccessToken)
       .then((data) => {
         expect(data.meta.code).to.be.equal(200);
-        done();
-      })
-      .catch(() => {
-        throw new Error();
-      });
-  });
-
-  it('Fetches followers', (done) => {
-    instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
-      .then((data) => {
-        expect(data).to.be.an('array');
-        done();
-      })
-      .catch(() => {
-        throw new Error();
-      });
-  });
-
-  it('Fetches follows', (done) => {
-    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
-      .then((data) => {
-        expect(data).to.be.an('array');
         done();
       })
       .catch(() => {
@@ -276,161 +253,5 @@ describe('API Integration Tests', () => {
       .catch(() => {
         throw new Error();
       });
-  });
-});
-
-describe('Cron Integration Tests', () => {
-  before((done) => {
-    postgres('small_profiles')
-      .where('instagram_id', '2')
-      .orWhere('instagram_id', '1')
-      .delete()
-      .then(() => {
-        done();
-      });
-  });
-
-  it('Saves followers to DB', (done) => {
-    const checkInsert = (originalData) => {
-      postgres('followers_arrays')
-        .select('*')
-        .where({
-          id: originalData[0]
-        })
-        .then((data) => {
-          expect(data[0].id).to.be.equal(originalData[0]);
-          done();
-        })
-        .catch((error) => {
-          throw new Error(error);
-        })
-    };
-
-    instagramApi.fetchFollowers(testId, testInstagramId, testInstagramAccessToken)
-      .then((followersArray) => {
-        cron.insertArray(testId, followersArray, true, postgres)
-          .then((data) => {
-            checkInsert(data);
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-      });
-  });
-
-  it('Saves follows to DB', (done) => {
-    const checkInsert = (originalData) => {
-      postgres('followings_arrays')
-        .select('*')
-        .where({
-          id: originalData[0]
-        })
-        .then((data) => {
-          expect(data[0].id).to.be.equal(originalData[0]);
-          done();
-        })
-        .catch((error) => {
-          throw new Error(error);
-        })
-    };
-
-    instagramApi.fetchFollowings(testId, testInstagramId, testInstagramAccessToken)
-      .then((followingsArrays) => {
-        cron.insertArray(testId, followingsArrays, false, postgres)
-          .then((data) => {
-            checkInsert(data);
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-      });
-  });
-
-  it('Deletes followers and follows from DB', (done) => {
-    postgres('followers_arrays')
-      .insert({
-        user_ref: testId,
-        timestamp: new Date(1000).toUTCString(),
-        users_array: '{}'
-      })
-      .then(() => {
-        cron.deleteOldData(postgres)
-          .then((rows) => {
-            expect(rows.length).to.be.greaterThan(0);
-            done();
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-      })
-      .catch((error) => {
-        throw new Error(error);
-      })
-  });
-
-  it('Saves smart profile to DB', (done) => {
-    cron.insertSmallProfiles([
-      {
-        id: 1,
-        username: 'user_a',
-        profile_picture: 'http://user_a.jpg'
-      }, {
-        id: 2,
-        username: 'user_b',
-        profile_picture: 'http://user_b.jpg'
-      }
-    ], postgres)
-      .then(() => {
-        postgres('small_profiles')
-          .select('*')
-          .where({
-            instagram_id: '2'
-          })
-          .then((users) => {
-            expect(users.length).to.be.equal(1);
-            done();
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-      })
-      .catch(() => {
-        throw new Error();
-      });
-
-  });
-});
-
-describe('Unit Utils Tests', () => {
-  it('Generates correct signature', (done) => {
-    const expectedSignature = '3bf4811eae70e4f4309ef7f9c451af0b3a8f33db0258241272f7e796102d34e5';
-    const sig = helpers.generateSignature('/users/self', {
-      access_token: testInstagramAccessToken
-    });
-
-    expect(sig).to.be.equal(expectedSignature);
-    done();
-  });
-
-
-  it('Computes proper JSON from URL', (done) => {
-    const urlParams = "?id=123&message=ok";
-    const json = helpers.getJsonFromUrlParams(urlParams);
-
-    expect(json.message).to.be.equal('ok');
-
-    done();
-  });
-
-  it('Computers proper params from JSON', (done) => {
-    const json = {
-      id: 123,
-      message: 'ok'
-    };
-
-    const params = helpers.jsonToParams(json);
-
-    expect(params).to.be.equal('id=123&message=ok');
-    done();
   });
 });
