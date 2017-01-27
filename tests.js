@@ -9,13 +9,12 @@ const config = require('./config.js');
 const postgres = require('./postgres');
 const app = require('./app');
 const instagramApi = require('./instagram');
-const UserController = require('./controllers/User');
+const UserController = require('./controllers/User/index');
 const helpers = require('./helpers');
 
 const testId = config('test_user_id');
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
-const testInstagramUsername = config('instagram_test_username');
 
 describe('Config tests', () => {
   before(() => {
@@ -32,18 +31,6 @@ describe('Instagram API Tests', () => {
     instagramApi.fetchStats(testInstagramAccessToken)
       .then((data) => {
         expect(data.meta.code).to.be.equal(200);
-        done();
-      })
-      .catch(() => {
-        throw new Error();
-      });
-  });
-
-  it('Fetches other user profile', (done) => {
-    instagramApi.fetchProfile(testInstagramId, testInstagramAccessToken)
-      .then((data) => {
-        expect(data.meta.code).to.be.equal(200);
-        expect(data.data.username).to.be.equal(testInstagramUsername);
         done();
       })
       .catch(() => {
@@ -239,16 +226,6 @@ describe('API Integration Tests', () => {
           .catch(() => {
             throw new Error();
           });
-      })
-      .catch(() => {
-        throw new Error();
-      });
-  });
-
-  it('Invalidates access token', (done) => {
-    UserController.invalidateAccessToken(testId)
-      .then(() => {
-        done();
       })
       .catch(() => {
         throw new Error();

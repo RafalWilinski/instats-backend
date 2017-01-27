@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const UserController = require('./controllers/User');
+const UserController = require('./controllers/User/index');
 
 router.get('/get_followers', UserController.getFollowers);
 router.get('/get_followings', UserController.getFollowings);

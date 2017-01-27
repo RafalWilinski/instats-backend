@@ -1,8 +1,7 @@
 'use strict';
-const instagram = require('../instagram');
-const postgres = require('../postgres');
-const logger = require('../log');
-const metrics = require('../metrics');
+const instagram = require('../../instagram');
+const postgres = require('../../postgres');
+const logger = require('../../log');
 
 const getFollowers = (req, res) => {
   if (req.query.id == null) {
@@ -17,6 +16,7 @@ const getFollowers = (req, res) => {
         user_ref: req.query.id
       })
       .orderBy('timestamp', 'asc')
+      .limit(100)
       .then((arrays) => {
         res.status(200);
         return res.json({
@@ -49,6 +49,7 @@ const getFollowings = (req, res) => {
         user_ref: req.query.id
       })
       .orderBy('timestamp', 'asc')
+      .limit(100)
       .then((arrays) => {
         res.status(200);
         return res.json({
@@ -237,117 +238,6 @@ const getUserInfoBatch = (req, res) => {
   }
 };
 
-const exchangeCodeForToken = (req, res) => {
-  if (req.body.code == null) {
-    res.status(403);
-    return res.json({
-      error: 'Exchange code is missing'
-    });
-  }
-
-  instagram.exchangeToken(req.body.code)
-    .then((body) => {
-      if (body.hasOwnProperty('code') && body.code !== 200) {
-        res.status(403);
-        metrics.apiExchangeFail.inc();
-
-        logger.error('Instagram API responded with non-200 status', {
-          statusCode: body.code,
-          code: req.body.code,
-          body
-        });
-
-        return res.json({
-          error: 'Failed to exchange token'
-        });
-      }
-
-      isUserRegistered(body.user.id)
-        .then((user) => {
-          updateAccessToken(body, user)
-            .then((data) => {
-              metrics.apiExchangeSuccess.inc();
-              res.status(200);
-              return res.json({
-                data: data[0]
-              });
-            })
-            .catch((error) => {
-              metrics.apiExchangeFail.inc();
-
-              logger.error('failed to update access token', {
-                error,
-                body
-              });
-
-              res.status(403);
-              return res.json({
-                error: 'Failed to exchange token'
-              });
-            });
-        })
-        .catch(() => {
-          registerUser(body)
-            .then((data) => {
-              metrics.apiExchangeSuccess.inc();
-              res.status(200);
-              return res.json({
-                data: data[0]
-              });
-            })
-            .catch((error) => {
-              logger.error('Failed to register new user to DB', {
-                error,
-                body
-              });
-
-              metrics.apiExchangeFail.inc();
-              res.status(400);
-              return res.json({
-                error: 'failed to register user'
-              })
-            });
-        });
-    })
-    .catch((error) => {
-      metrics.apiExchangeFail.inc();
-      logger.error('Failed to register new user - Instagram API Responded with error', error);
-      res.status(403);
-      return res.json({
-        error: 'Failed to exchange token'
-      });
-    });
-};
-
-const registerUser = (payload) => new Promise((resolve, reject) => {
-  postgres('users')
-    .insert({
-      instagram_id: payload.user.id,
-      instagram_name: payload.user.username,
-      access_token: payload.access_token,
-      profile_picture: payload.user.profile_picture,
-      last_login: new Date().toUTCString(),
-      access_token_validity: true,
-      is_premium: false,
-      register_date: new Date().toUTCString()
-    })
-    .returning('*')
-    .then((data) => {
-      logger.info('New user registered', {
-        result: data,
-        payload
-      });
-      return resolve(data);
-    })
-    .catch((error) => {
-      logger.error('Error while registering new user', {
-        error,
-        payload
-      });
-      return reject(error);
-    });
-});
-
 const updateAccessToken = (body) => new Promise((resolve, reject) => {
   postgres('users')
     .where({
@@ -422,34 +312,9 @@ const promoteUser = (req, res) => {
   }
 };
 
-const invalidateAccessToken = (userId) => new Promise((resolve, reject) => {
-  postgres('users')
-    .update({
-      access_token_validity: false
-    })
-    .where({
-      id: userId
-    })
-    .then((data) => {
-      logger.info('Access token invalidated', {
-        userId,
-        data
-      });
-
-      return resolve();
-    })
-    .catch((error) => {
-      logger.error('Failed to invalidate access token', {
-        userId,
-        error
-      });
-
-      return reject();
-    });
-});
 
 module.exports = {
-  exchangeCodeForToken,
+  exchangeCodeForToken: require('./exchangeCodeForToken'),
   getFollowers,
   getFollowings,
   getStats,
@@ -459,7 +324,6 @@ module.exports = {
   getUserInfoBatch,
   isUserRegistered,
   promoteUser,
-  registerUser,
+  registerUser: require('./register'),
   updateAccessToken,
-  invalidateAccessToken
 };

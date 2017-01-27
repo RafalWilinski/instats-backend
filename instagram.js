@@ -5,15 +5,11 @@ const Promise = require('bluebird');
 const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
-const metrics = require('./metrics');
 const request = require('request');
 const helpers = require('./helpers');
 
 const generateSignature = helpers.generateSignature;
-const fetchPaginatedData = helpers.fetchPaginatedData;
 const jsonToParams = helpers.jsonToParams;
-
-const defaultFetchCount = config('default_fetch_count');
 
 const fetchStats = (access_token) => new Promise((resolve, reject) => {
   const sig = generateSignature('/users/self', {
@@ -35,7 +31,6 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
       });
 
       if (payload.data.meta.code === 200) {
-        metrics.fetchStatsSuccess.inc();
         return resolve(payload.data);
       } else {
         logger.warn('[fetchStats] Instagram API returned non-200 status code', {
@@ -46,7 +41,6 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
           headers: payload.headers
         });
 
-        metrics.fetchStatsFail.inc();
         return reject();
       }
     }).catch((error) => {
@@ -56,7 +50,6 @@ const fetchStats = (access_token) => new Promise((resolve, reject) => {
         access_token
       });
 
-      metrics.fetchStatsFail.inc();
       return reject();
     });
 });
@@ -79,24 +72,18 @@ const exchangeToken = (code) => new Promise((resolve, reject) => {
           code
         });
 
-        metrics.exchangeFail.inc();
         return reject(error);
     } else {
       logger.info('Instagram info fetched', {
         body: JSON.parse(body)
       });
 
-      metrics.exchangeSuccess.inc();
       return resolve(JSON.parse(body));
     }
   });
 });
 
 module.exports = {
-  fetchFollowers,
-  fetchFollowings,
-  fetchProfile,
   fetchStats,
-  fetchPhotos,
   exchangeToken,
 };

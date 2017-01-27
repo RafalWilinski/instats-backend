@@ -1,6 +1,6 @@
 const dotenv = require('dotenv').config();
-require('@risingstack/trace');
 const newrelic = require('newrelic');
+const trace = require('@risingstack/trace');
 const express = require('express');
 const postgres = require('./postgres');
 const router = require('./router');
@@ -10,9 +10,16 @@ const winston = require('winston');
 const logger = require('./log');
 const app = express();
 
+const datadogOptions = {
+  'response_code': true,
+  'tags': ['instats:api']
+};
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(require('connect-datadog')(datadogOptions));
 
 app.use('/api', router);
 app.get('/healthcheck', require('./healthcheck'));
