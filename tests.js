@@ -15,6 +15,7 @@ const helpers = require('./helpers');
 const testId = config('test_user_id');
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
+const testPhotoId = config('test_photo_id');
 
 describe('Config tests', () => {
   before(() => {
@@ -97,11 +98,73 @@ describe('API Integration Tests', () => {
   });
 
   describe('/api/user/photo', () => {
+    it('Returns photo analytics with 10 limit', (done) => {
+      const url = `/api/user/photo?id=${testPhotoId}&limit=10`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.equal(10);
+          done();
+        });
+    });
 
+    it('Returns photo analytics with with maximum limit', (done) => {
+      const url = `/api/user/photo?id=${testPhotoId}&limit=999`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.equal(100);
+          done();
+        });
+    });
+
+    it('Returns photo analytics with with default limit', (done) => {
+      const url = `/api/user/photo?id=${testPhotoId}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.equal(100);
+          done();
+        });
+    });
+
+    it('Returns error when id not supplied', (done) => {
+      const url = `/api/user/photo?${testPhotoId}`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
   });
 
   describe('/api/user/photos', () => {
+    it('Returns photos when called with correct userId', (done) => {
+      const url = `/api/user/photos?userId=${testId}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.greaterThan(5);
+          done();
+        });
+    });
 
+    it('Returns error when called without userId', (done) => {
+      const url = `/api/user/photos?useId=${testId}`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
   });
 });
 

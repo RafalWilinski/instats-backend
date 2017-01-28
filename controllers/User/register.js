@@ -19,6 +19,7 @@ const registerUser = (payload) => new Promise((resolve, reject) => {
         result: data,
         payload
       });
+
       return resolve(data);
     })
     .catch((error) => {
@@ -26,6 +27,7 @@ const registerUser = (payload) => new Promise((resolve, reject) => {
         error,
         payload
       });
+
       return reject(error);
     });
 });

@@ -13,14 +13,25 @@ const idNotProvidedError = (res) => {
 };
 
 const postgresError = (error, res) => {
-  res.status(404);
+  res.status(500);
   return res.json({
     error,
   });
 };
 
+const getLimit = (req) => {
+  const defaultLimit = 100;
+
+  if (req.query.limit) {
+    const limit = parseInt(req.query.limit);
+    return limit > defaultLimit ? defaultLimit : limit;
+  }
+
+  return defaultLimit;
+};
+
 const getPhotos = (req, res) => {
-  if (req.query.userId === null) {
+  if (req.query.userId == null) {
     return idNotProvidedError(res);
   }
 
@@ -41,8 +52,9 @@ const getPhotoAnalytics = (req, res) => {
   postgres('photos')
     .select('*')
     .where({
-      id: req.query.id
+      'photos.id': req.query.id,
     })
+    .limit(getLimit(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
     .then((data) => returnData(data, res))
     .catch((error) => postgresError(error, res));
