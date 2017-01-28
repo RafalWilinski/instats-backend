@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "test": "mocha tests.js",
-    "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly tests.js && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha --root ./controllers tests.js "
   },
   "engine": {
     "node": "6.0.0",
@@ -29,6 +29,7 @@
     "axios": "^0.15.3",
     "bluebird": "^3.4.7",
     "body-parser": "^1.16.0",
+    "connect-datadog": "0.0.6",
     "cors": "^2.8.1",
     "dotenv": "^4.0.0",
     "express": "^4.14.0",

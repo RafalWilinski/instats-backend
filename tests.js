@@ -24,6 +24,16 @@ describe('Config tests', () => {
   it('Gets variable from environment if config is not available', () => {
     expect(config('test_variable')).to.be.equal('abc');
   });
+
+  it('Healthcheck responds OK status', (done) => {
+    request(app)
+      .get('/healthcheck')
+      .expect(200)
+      .end((err) => {
+        if (err) throw new Error(err);
+        done();
+      })
+  });
 });
 
 describe('Instagram API Tests', () => {
@@ -54,119 +64,48 @@ describe('API Integration Tests', () => {
       });
   });
 
-  it('Healthcheck responds OK status', (done) => {
-    request(app)
-      .get('/healthcheck')
-      .expect(200)
-      .end((err) => {
-        if (err) throw new Error(err);
-        done();
-      })
-  });
+  describe('/api/user/stats', () => {
+    it('Failes to fetch follows without access token', (done) => {
+      const url = `/api/user/stats`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
 
-  it('Failes to fetch followers without id', (done) => {
-    const url = `/api/get_followings`;
-    request(app)
-      .get(url)
-      .expect(400, done);
-  });
-
-  it('Fetches followers', (done) => {
-    const url = `/api/get_followings?id=${testId}`;
-    request(app)
-      .get(url)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body.result).to.an('array');
-        expect(data.body.result.length).to.be.greaterThan(50);
-        done();
-      });
-  });
-
-  it('Failes to fetch follows without id', (done) => {
-    const url = `/api/get_followers`;
-    request(app)
-      .get(url)
-      .expect(400, done);
-  });
-
-  it('Fetches follows', (done) => {
-    const url = `/api/get_followers?id=${testId}`;
-    request(app)
-      .get(url)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body.result).to.an('array');
-        expect(data.body.result.length).to.be.greaterThan(50);
-        done();
-      });
-  });
-
-  it('Failes to fetch follows without access token', (done) => {
-    const url = `/api/get_stats`;
-    request(app)
-      .get(url)
-      .expect(400, done);
-  });
-
-  it('Fetches stats', (done) => {
-    const url = `/api/get_stats?access_token=${testInstagramAccessToken}`;
-    request(app)
-      .get(url)
-      .expect(200)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body).to.an('object');
-        expect(data.body.meta.code).to.be.equal(200);
-        expect(data.body.data.id).to.be.equal(testInstagramId);
-        done();
-      });
-  });
-
-  it('Failes to promote user without id', (done) => {
-    const url = `/api/promote`;
-    request(app)
-      .post(url)
-      .expect(400, done);
-  });
-
-  it('Promotes user', (done) => {
-    const url = `/api/promote`;
-    request(app)
-      .post(url)
-      .send({
-        id: testId
-      })
-      .expect(200)
-      .end((err, data) => {
-        if (err) throw new Error(err);
-        expect(data.body.success).to.be.equal('ok');
-        check();
-      });
-
-    const check = () => {
-      postgres('users')
-        .select('*')
-        .where({
-          id: testId
-        })
-        .then((data) => {
-          expect(data[0].is_premium).to.be.equal(true);
+    it('Fetches stats', (done) => {
+      const url = `/api/user/stats?access_token=${testInstagramAccessToken}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('object');
+          expect(data.body.meta.code).to.be.equal(200);
+          expect(data.body.data.id).to.be.equal(testInstagramId);
           done();
-        })
-        .catch((error) => {
-          throw new Error(error);
         });
-    }
+    });
   });
 
-  it('Failes to exchange token without token supplied', (done) => {
-    const url = `/api/request_access_token`;
-    request(app)
-      .post(url)
-      .expect(403, done);
+  describe('/api/user/request_access_token', () => {
+    it('Failes to exchange token without token supplied', (done) => {
+      const url = `/api/user/request_access_token`;
+      request(app)
+        .post(url)
+        .expect(403, done);
+    });
   });
 
+  describe('/api/user/photo', () => {
+
+  });
+
+  describe('/api/user/photos', () => {
+
+  });
+});
+
+describe('UserController functions', () => {
   it('isUserRegistered returns true for registered user', (done) => {
     UserController.isUserRegistered(testInstagramId)
       .then(() => {

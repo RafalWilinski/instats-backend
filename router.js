@@ -2,14 +2,12 @@ const express = require('express');
 const router = express.Router();
 const UserController = require('./controllers/User/index');
 
-router.get('/get_followers', UserController.getFollowers);
-router.get('/get_followings', UserController.getFollowings);
-router.get('/get_photos', UserController.getPhotos);
-router.get('/get_photos_analytics', UserController.getPhotoAnalytics);
-router.get('/get_stats', UserController.getStats);
-router.get('/get_user_info', UserController.getUserInfo);
-router.get('/get_user_info_batch', UserController.getUserInfoBatch);
-router.post('/request_access_token', UserController.exchangeCodeForToken);
-router.post('/promote', UserController.promoteUser);
+router.get('/user/photos', UserController.getPhotos);
+router.get('/user/photo/', UserController.getPhotoAnalytics);
+router.get('/user/stats', UserController.getStats);
+router.post('/user/request_access_token', UserController.exchangeCodeForToken);
+
+router.get('/small_profile', UserController.getUserInfo);
+router.get('/small_profiles', UserController.getUserInfoBatch);
 
 module.exports = router;
