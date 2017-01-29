@@ -16,6 +16,7 @@ const testId = config('test_user_id');
 const testInstagramId = config('instagram_test_id');
 const testInstagramAccessToken = config('instagram_test_access_token');
 const testPhotoId = config('test_photo_id');
+const testSmallProfile = config('test_small_profile');
 
 describe('Config tests', () => {
   before(() => {
@@ -164,6 +165,55 @@ describe('API Integration Tests', () => {
       request(app)
         .get(url)
         .expect(400, done);
+    });
+  });
+
+  describe('/small_profile', () => {
+    it('Returns 400 when called without id', (done) => {
+      const url = `/api/small_profile?i=${testId}`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
+
+    it('Returns 400 when called with ID not present in database', (done) => {
+      const url = `/api/small_profile?id=a`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
+
+    it('Returns small profile when called with correct ID', (done) => {
+      const url = `/api/small_profile?id=${testSmallProfile}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('object');
+          done();
+        });
+    });
+  });
+
+  describe('/small_profiles', () => {
+    it('Returns 400 when called without ids', (done) => {
+      const url = `/api/small_profiles?id=${testId}`;
+      request(app)
+        .get(url)
+        .expect(400, done);
+    });
+
+    it('Returns array of profiles when called with valid ids', (done) => {
+      const url = `/api/small_profiles?ids=1,2`;
+      request(app)
+        .get(url)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.equal(2);
+          done();
+        });
     });
   });
 });
