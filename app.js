@@ -7,6 +7,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const winston = require('winston');
 const logger = require('./log');
+const RateLimit = require('express-rate-limit');
 const app = express();
 
 const datadogOptions = {
@@ -14,6 +15,15 @@ const datadogOptions = {
   'tags': ['instats:api']
 };
 
+app.enable('trust proxy');
+
+const limiter = new RateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  delayMs: 0,
+});
+
+app.use(limiter);
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
