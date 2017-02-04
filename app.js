@@ -12,7 +12,7 @@ const app = express();
 
 const datadogOptions = {
   'response_code': true,
-  'tags': ['instats:api']
+  'tags': ['instats:api'],
 };
 
 app.enable('trust proxy');

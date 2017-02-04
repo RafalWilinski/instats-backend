@@ -71,7 +71,7 @@ describe('API Integration Tests', () => {
       const url = `/api/user/1/stats`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(403, done);
     });
 
     it('Fetches stats', (done) => {

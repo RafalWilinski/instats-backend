@@ -12,18 +12,7 @@ const instagramError = (req, res) => {
   });
 };
 
-const accessTokenMissingError = (res) => {
-  res.status(400);
-  return res.json({
-    error: 'access_token not provided'
-  });
-};
-
 const getStats = (req, res) => {
-  if (req.query.access_token == null) {
-    return accessTokenMissingError(res);
-  }
-
   instagram.fetchStats(req.query.access_token)
     .then((instagramData) => {
       res.status(200);

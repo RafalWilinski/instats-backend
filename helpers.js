@@ -36,7 +36,6 @@ const modifyPaginationUrl = (fullUrl, apiPath) => {
 
   const signature = generateSignature(apiPath, urlParamsAsJson);
   const newUrl = fullUrl.replace(/&sig(.*?)&/, `&sig=${signature}&`);
-  // const newUrl = fullUrl.split('sig=')[0] + 'sig=' + signature + '&cursor=' + urlParamsAsJson.cursor;
 
   logger.info('Pagination url generated', { fullUrl, newUrl, signature });
   return newUrl;
