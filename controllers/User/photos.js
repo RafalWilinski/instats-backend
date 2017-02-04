@@ -5,13 +5,6 @@ const returnData = (data, res) => {
   return res.json(data);
 };
 
-const idNotProvidedError = (res) => {
-  res.status(400);
-  return res.json({
-    error: 'id not provided',
-  });
-};
-
 const postgresError = (error, res) => {
   res.status(500);
   return res.json({
@@ -31,28 +24,20 @@ const getLimit = (req) => {
 };
 
 const getPhotos = (req, res) => {
-  if (req.query.userId == null) {
-    return idNotProvidedError(res);
-  }
-
   postgres('photos')
     .select('*')
     .where({
-      user: req.query.userId,
+      user: req.params.userId,
     })
     .then((photos) => returnData(photos, res))
     .catch((error) => postgresError(error, res));
 };
 
 const getPhotoAnalytics = (req, res) => {
-  if (req.query.id == null) {
-    return idNotProvidedError(res);
-  }
-
   postgres('photos')
     .select('*')
     .where({
-      'photos.id': req.query.id,
+      'photos.id': req.params.photoId,
     })
     .limit(getLimit(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')

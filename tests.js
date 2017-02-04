@@ -68,14 +68,14 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/stats', () => {
     it('Failes to fetch follows without access token', (done) => {
-      const url = `/api/user/stats`;
+      const url = `/api/user/1/stats`;
       request(app)
         .get(url)
         .expect(400, done);
     });
 
     it('Fetches stats', (done) => {
-      const url = `/api/user/stats?access_token=${testInstagramAccessToken}`;
+      const url = `/api/user/${testId}/stats?access_token=${testInstagramAccessToken}`;
       request(app)
         .get(url)
         .expect(200)
@@ -100,7 +100,7 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/photo', () => {
     it('Returns photo analytics with 10 limit', (done) => {
-      const url = `/api/user/photo?id=${testPhotoId}&limit=10`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=10`;
       request(app)
         .get(url)
         .expect(200)
@@ -113,7 +113,7 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns photo analytics with with maximum limit', (done) => {
-      const url = `/api/user/photo?id=${testPhotoId}&limit=999`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999`;
       request(app)
         .get(url)
         .expect(200)
@@ -126,7 +126,7 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns photo analytics with with default limit', (done) => {
-      const url = `/api/user/photo?id=${testPhotoId}`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}`;
       request(app)
         .get(url)
         .expect(200)
@@ -139,16 +139,16 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns error when id not supplied', (done) => {
-      const url = `/api/user/photo?${testPhotoId}`;
+      const url = `/api/user/${testId}/photo/`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(404, done);
     });
   });
 
   describe('/api/user/photos', () => {
     it('Returns photos when called with correct userId', (done) => {
-      const url = `/api/user/photos?userId=${testId}`;
+      const url = `/api/user/${testId}/photos?userId=${testId}`;
       request(app)
         .get(url)
         .expect(200)
@@ -160,11 +160,11 @@ describe('API Integration Tests', () => {
         });
     });
 
-    it('Returns error when called without userId', (done) => {
-      const url = `/api/user/photos?useId=${testId}`;
+    it('Returns error when called with invalid userId', (done) => {
+      const url = `/api/user/chuj/photos`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(500, done);
     });
   });
 
