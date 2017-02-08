@@ -1,27 +1,5 @@
 const postgres = require('../../postgres');
-
-const returnData = (data, res) => {
-  res.status(200);
-  return res.json(data);
-};
-
-const postgresError = (error, res) => {
-  res.status(500);
-  return res.json({
-    error,
-  });
-};
-
-const getLimit = (req) => {
-  const defaultLimit = 100;
-
-  if (req.query.limit) {
-    const limit = parseInt(req.query.limit);
-    return limit > defaultLimit ? defaultLimit : limit;
-  }
-
-  return defaultLimit;
-};
+const helpers = require('../helpers');
 
 const getPhotos = (req, res) => {
   postgres('photos')
@@ -29,8 +7,8 @@ const getPhotos = (req, res) => {
     .where({
       user: req.params.userId,
     })
-    .then((photos) => returnData(photos, res))
-    .catch((error) => postgresError(error, res));
+    .then((photos) => helpers.returnData(photos, res))
+    .catch((error) => helpers.postgresError(error, res));
 };
 
 const getPhotoAnalytics = (req, res) => {
@@ -39,10 +17,10 @@ const getPhotoAnalytics = (req, res) => {
     .where({
       'photos.id': req.params.photoId,
     })
-    .limit(getLimit(req))
+    .limit(helpers.getLimit(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
-    .then((data) => returnData(data, res))
-    .catch((error) => postgresError(error, res));
+    .then((data) => helpers.returnData(data, res))
+    .catch((error) => helpers.postgresError(error, res));
 };
 
 module.exports = {

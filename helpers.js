@@ -6,14 +6,14 @@ const config = require('./config.js');
 const UserController = require('./controllers/User/index');
 
 const generateSignature = (endpoint, params) => {
-  var query = endpoint;
+  let query = endpoint;
   const ordered = {};
 
   Object.keys(params).sort().forEach((key) => {
     ordered[key] = params[key];
   });
 
-  for (var param in ordered) {
+  for (const param in ordered) {
     query += '|' + param + '=' + ordered[param];
   }
   return crypto.createHmac("sha256", config('instagram_client_secret')).update(query).digest("hex");
