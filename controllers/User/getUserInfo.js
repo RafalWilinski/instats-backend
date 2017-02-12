@@ -1,25 +1,16 @@
-const logger = require('../../log');
 const postgres = require('../../postgres');
-const responses = require('./responses');
+const responses = require('./../responses');
 
 const postgresQueryError = (error, req, res) => {
-  if (Object.keys(error).length === 0) return responses.userNotFoundError(res);
+  if (Object.keys(error).length === 0)
+    return responses.returnStatus('User not found', 404, res, req.query.id, req.query.ids);
 
-  logger.error('Error while executing getSmallProfile/getSmallProfilesBatch query', {
-    error,
-    ids: req.query.ids,
-    id: req.query.id,
-  });
-
-  res.status(500);
-  return res.json({
-    error: 'users not found',
-  });
+  return responses.returnStatus('Internal Database Error', 500, res, req.query.id, req.query.ids);
 };
 
 const getSmallProfilesBatch = (req, res) => {
   if (req.query.ids == null) {
-    return responses.idNotProvidedError(res);
+    return responses.returnStatus('Ids not provided', 422, res);
   }
 
   const array = Array.from(new Set(req.query.ids.split(',').filter((id) => id)));
@@ -37,7 +28,7 @@ const getSmallProfilesBatch = (req, res) => {
 
 const getSmallProfile = (req, res) => {
   if (req.query.id == null) {
-    return responses.idNotProvidedError(res);
+    return responses.returnStatus('Id not provided', 422, res);
   }
 
   postgres('small_profiles')

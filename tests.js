@@ -74,7 +74,7 @@ describe('API Integration Tests', () => {
         .expect(403, done);
     });
 
-    it('Fetches stats', (done) => {
+    it('Fetches stats with correct userId and correct access_token', (done) => {
       const url = `/api/user/${testId}/stats?access_token=${testInstagramAccessToken}`;
       request(app)
         .get(url)
@@ -169,18 +169,18 @@ describe('API Integration Tests', () => {
   });
 
   describe('/small_profile', () => {
-    it('Returns 400 when called without id', (done) => {
+    it('Returns 422 when called without id', (done) => {
       const url = `/api/small_profile?i=${testId}`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(422, done);
     });
 
-    it('Returns 400 when called with ID not present in database', (done) => {
+    it('Returns 404 when called with ID not present in database', (done) => {
       const url = `/api/small_profile?id=a`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(404, done);
     });
 
     it('Returns small profile when called with correct ID', (done) => {
@@ -197,11 +197,11 @@ describe('API Integration Tests', () => {
   });
 
   describe('/small_profiles', () => {
-    it('Returns 400 when called without ids', (done) => {
+    it('Returns 422 when called without ids', (done) => {
       const url = `/api/small_profiles?id=${testId}`;
       request(app)
         .get(url)
-        .expect(400, done);
+        .expect(422, done);
     });
 
     it('Returns array of profiles when called with valid ids', (done) => {

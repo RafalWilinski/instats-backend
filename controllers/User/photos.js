@@ -1,5 +1,5 @@
 const postgres = require('../../postgres');
-const responses = require('./responses');
+const responses = require('./../responses');
 const helpers = require('../helpers');
 
 const getPhotos = (req, res) => {
@@ -9,7 +9,7 @@ const getPhotos = (req, res) => {
       user: req.params.userId,
     })
     .then((photos) => responses.returnData(photos, res))
-    .catch((error) => responses.postgresError(error, res));
+    .catch((error) => responses.returnStatus('Internal Database Error', 500, res));
 };
 
 const getPhotoAnalytics = (req, res) => {
@@ -21,7 +21,7 @@ const getPhotoAnalytics = (req, res) => {
     .limit(helpers.getLimit(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
     .then((data) => responses.returnData(data, res))
-    .catch((error) => responses.postgresError(error, res));
+    .catch((error) => responses.returnStatus('Internal Database Error', 500, res));
 };
 
 module.exports = {
