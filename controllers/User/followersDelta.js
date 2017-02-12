@@ -1,5 +1,4 @@
 const postgres = require('../../postgres');
-const logger = require('../../log');
 const helpers = require('../helpers');
 
 const idNotProvidedError = (res) => {

@@ -1,4 +1,5 @@
 const postgres = require('../../postgres');
+const responses = require('./responses');
 const helpers = require('../helpers');
 
 const getPhotos = (req, res) => {
@@ -7,8 +8,8 @@ const getPhotos = (req, res) => {
     .where({
       user: req.params.userId,
     })
-    .then((photos) => helpers.returnData(photos, res))
-    .catch((error) => helpers.postgresError(error, res));
+    .then((photos) => responses.returnData(photos, res))
+    .catch((error) => responses.postgresError(error, res));
 };
 
 const getPhotoAnalytics = (req, res) => {
@@ -19,8 +20,8 @@ const getPhotoAnalytics = (req, res) => {
     })
     .limit(helpers.getLimit(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
-    .then((data) => helpers.returnData(data, res))
-    .catch((error) => helpers.postgresError(error, res));
+    .then((data) => responses.returnData(data, res))
+    .catch((error) => responses.postgresError(error, res));
 };
 
 module.exports = {

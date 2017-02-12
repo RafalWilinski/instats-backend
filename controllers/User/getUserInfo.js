@@ -13,7 +13,7 @@ const postgresQueryError = (error, req, res) => {
 
   res.status(500);
   return res.json({
-    error: 'users not found:err'
+    error: 'users not found',
   });
 };
 
