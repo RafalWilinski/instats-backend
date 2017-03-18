@@ -13,6 +13,7 @@ const getFollowersDelta = (req, res) => {
       user_ref: req.query.userId,
     })
     .limit(helpers.getLimit(req))
+    .offset(helpers.getOffset(req))
     .then((data) => responses.returnData(data, res))
     .catch((error) => responses.returnStatus('Internal Database Error', 500, res));
 };

@@ -9,6 +9,16 @@ const getLimit = (req) => {
   return defaultLimit;
 };
 
+const getOffset = (req) => {
+  if (req.query.offset) {
+    const offset = parseInt(req.query.offset);
+    return offset;
+  }
+
+  return 0;
+};
+
 module.exports = {
   getLimit,
+  getOffset,
 };

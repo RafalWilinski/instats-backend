@@ -10,7 +10,6 @@ const returnStatus = (errorMessage, status, res) => {
     .filter(arg => parseInt(arg) > 2)
     .map(arg => ({arg : arguments[arg]}));
 
-  console.log(args);
 
   logger.error(errorMessage, args);
 
