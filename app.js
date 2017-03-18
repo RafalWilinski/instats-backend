@@ -1,4 +1,10 @@
 const dotenv = require('dotenv').config();
+const opbeat = require('opbeat').start({
+  appId: process.env.OPBEAT_APP_ID,
+  organizationId: process.env.OPBEAT_ORG_ID,
+  secretToken: process.env.OPBEAT_SECRET_TOKEN,
+});
+
 const express = require('express');
 const postgres = require('./postgres');
 const router = require('./router');
@@ -17,13 +23,6 @@ const limiter = new RateLimit({
   delayMs: 0,
 });
 
-const opbeat = require('opbeat').start({
-  appId: process.env.OPBEAT_APP_ID,
-  organizationId: process.env.OPBEAT_ORG_ID,
-  secretToken: process.env.OPBEAT_SECRET_TOKEN,
-});
-
-app.use(opbeat.middleware.express());
 app.use(limiter);
 app.use(cors());
 app.use(bodyParser.json());
@@ -31,6 +30,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/api', router);
 app.get('/healthcheck', require('./healthcheck'));
+
+app.use(opbeat.middleware.express());
 
 app.listen(process.env.PORT || 3000, () => {
   logger.info('Server started at ' + (process.env.PORT || 3000) + ' port');
