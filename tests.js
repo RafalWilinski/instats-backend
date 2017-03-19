@@ -219,7 +219,7 @@ describe('API Integration Tests', () => {
 });
 
 describe('UserController functions', () => {
-  it('isUserRegistered returns true for registered user', (done) => {
+  it('isUserRegistered.js returns true for registered user', (done) => {
     UserController.isUserRegistered(testInstagramId)
       .then(() => {
         done();
