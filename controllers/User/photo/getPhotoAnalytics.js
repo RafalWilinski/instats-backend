@@ -12,7 +12,7 @@ const getPhotoAnalytics = (req, res) => {
     .offset(helpers.getOffset(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
     .then((data) => responses.returnData(data, res))
-    .catch((error) => responses.returnStatus('Internal Database Error', 500, res));
+    .catch((error) => responses.returnStatus('Internal Database Error', 500, res, error));
 };
 
 module.exports = getPhotoAnalytics;
