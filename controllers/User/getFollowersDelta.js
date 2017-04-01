@@ -3,14 +3,14 @@ const helpers = require('../helpers');
 const responses = require('../responses');
 
 const getFollowersDelta = (req, res) => {
-  if (req.query.userId == null) {
+  if (req.params.userId == null) {
     return responses.returnStatus('UserId not provided', 422, res);
   }
 
   postgres('followers_deltas')
     .select('*')
     .where({
-      user_ref: req.query.userId,
+      user_ref: req.params.userId,
     })
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))

@@ -81,9 +81,8 @@ describe('API Integration Tests', () => {
         .expect(200)
         .end((err, data) => {
           if (err) throw new Error(err);
-          expect(data.body).to.an('object');
-          expect(data.body.meta.code).to.be.equal(200);
-          expect(data.body.data.id).to.be.equal(testInstagramId);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.greaterThan(10);
           done();
         });
     });
