@@ -6,8 +6,7 @@ const authMiddleware = require('./controllers/middleware');
 
 router.get('/user/:userId/photos', UserController.getPhotos);
 router.get('/user/:userId/photo/:photoId', UserController.getPhotoAnalytics);
-router.get('/user/:userId/stats/delta', authMiddleware, UserController.getStatsOverTime);
-router.get('/user/:userId/stats', authMiddleware, UserController.getStats);
+router.get('/user/:userId/stats', authMiddleware, UserController.getStatsOverTime);
 router.get('/user/:userId/followers/', UserController.getFollowersDelta);
 router.post('/user/request_access_token', UserController.exchangeCodeForToken);
 
