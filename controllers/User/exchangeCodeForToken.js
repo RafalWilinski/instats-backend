@@ -1,6 +1,8 @@
 const instagram = require('../../instagram');
 const responses = require('./../responses');
-const UserController = require('./index');
+const isUserRegistered = require('./helpers/isUserRegistered');
+const updateAccessToken = require('./helpers/updateAccessToken');
+const registerUser = require('./register');
 
 const exchangeCodeForToken = (req, res) => {
   if (req.body.code == null) {
@@ -12,12 +14,12 @@ const exchangeCodeForToken = (req, res) => {
       return responses.returnStatus('Instagram Exchange code not present in response', 403, res);
     }
 
-    UserController.isUserRegistered(body.user.id).then((user) => {
-      UserController.updateAccessToken(body, user)
+    isUserRegistered(body.user.id).then((user) => {
+      updateAccessToken(body, user)
         .then((data) => responses.returnData(data, res))
         .catch((error) => responses.returnStatus('Failed to update access token', 403, res, error));
       }).catch(() => {
-      UserController.registerUser(body)
+      registerUser(body)
           .then((data) => responses.returnData(data[0], res))
           .catch((error) => responses.returnStatus('Failed to register user', 500, res, error));
       });

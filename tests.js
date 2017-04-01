@@ -96,6 +96,16 @@ describe('API Integration Tests', () => {
         .post(url)
         .expect(403, done);
     });
+
+    it('Failes to exchange token when token supplied is invalid', (done) => {
+      const url = `/api/user/request_access_token`;
+      request(app)
+        .post(url)
+        .send({
+          code: 123,
+        })
+        .expect(403, done);
+    });
   });
 
   describe('/api/user/photo', () => {
