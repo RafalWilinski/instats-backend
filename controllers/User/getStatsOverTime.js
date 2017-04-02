@@ -12,6 +12,7 @@ const getStatsOverTime = (req, res) => {
     .where({
       'user_ref': req.params.userId,
     })
+    .whereBetween('timestamp', helpers.getBetweenDates(req))
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))
     .then((data) => responses.returnData(data, res))

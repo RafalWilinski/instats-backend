@@ -86,6 +86,19 @@ describe('API Integration Tests', () => {
           done();
         });
     });
+
+    it('Fetches stats with correct userId and correct access_token with correct date', (done) => {
+      const url = `/api/user/${testId}/stats?access_token=${testInstagramAccessToken}&from=2017-04-01&to=2017-04-02`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('array');
+          expect(data.body.length).to.be.equal(96);
+          done();
+        });
+    });
   });
 
   describe('/api/user/request_access_token', () => {
