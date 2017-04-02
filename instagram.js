@@ -1,7 +1,6 @@
 'use strict';
 const axios = require('axios');
 const crypto = require('crypto');
-const Promise = require('bluebird');
 const postgres = require('./postgres');
 const config = require('./config.js');
 const logger = require('./log');
