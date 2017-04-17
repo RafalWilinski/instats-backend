@@ -7,11 +7,13 @@ const getStatsOverTime = (req, res) => {
     return responses.returnStatus('UserId not provided', 422, res);
   }
 
+  const whereClause = {
+    'user_ref': req.params.userId,
+  };
+
   postgres('user_stats')
     .select('*')
-    .where({
-      'user_ref': req.params.userId,
-    })
+    .where(whereClause)
     .whereBetween('timestamp', helpers.getBetweenDates(req))
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))

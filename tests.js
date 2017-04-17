@@ -135,7 +135,7 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns photo analytics with with maximum limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999&mod=3`;
       request(app)
         .get(url)
         .expect(200)

@@ -11,8 +11,7 @@ const getLimit = (req) => {
 
 const getOffset = (req) => {
   if (req.query.offset) {
-    const offset = parseInt(req.query.offset);
-    return offset;
+    return parseInt(req.query.offset);
   }
 
   return 0;
