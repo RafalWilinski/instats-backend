@@ -1,5 +1,5 @@
 const getLimit = (req) => {
-  const defaultLimit = 100;
+  const defaultLimit = 1000;
 
   if (req.query.limit) {
     const limit = parseInt(req.query.limit);

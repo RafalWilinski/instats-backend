@@ -142,7 +142,7 @@ describe('API Integration Tests', () => {
         .end((err, data) => {
           if (err) throw new Error(err);
           expect(data.body).to.an('array');
-          expect(data.body.length).to.be.equal(100);
+          expect(data.body.length).to.be.equal(1000);
           done();
         });
     });
@@ -155,7 +155,7 @@ describe('API Integration Tests', () => {
         .end((err, data) => {
           if (err) throw new Error(err);
           expect(data.body).to.an('array');
-          expect(data.body.length).to.be.equal(100);
+          expect(data.body.length).to.be.equal(1000);
           done();
         });
     });
