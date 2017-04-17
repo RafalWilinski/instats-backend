@@ -6,5 +6,6 @@ module.exports = {
   registerUser: require('./register'),
   updateAccessToken: require('./helpers/updateAccessToken'),
   getFollowersDelta: require('./getFollowersDelta'),
-  getStatsOverTime: require('./getStatsOverTime')
+  getStatsOverTime: require('./getStatsOverTime'),
+  registerNotificationsToken: require('./registerNotificationsToken'),
 };
