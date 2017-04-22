@@ -1,5 +1,5 @@
 const getLimit = (req) => {
-  const defaultLimit = 100;
+  const defaultLimit = 1000;
 
   if (req.query.limit) {
     const limit = parseInt(req.query.limit);
@@ -11,8 +11,7 @@ const getLimit = (req) => {
 
 const getOffset = (req) => {
   if (req.query.offset) {
-    const offset = parseInt(req.query.offset);
-    return offset;
+    return parseInt(req.query.offset);
   }
 
   return 0;
