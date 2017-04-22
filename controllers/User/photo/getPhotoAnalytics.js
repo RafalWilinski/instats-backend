@@ -20,7 +20,7 @@ const getPhotoAnalytics = (req, res) => {
       FROM photos
       JOIN photos_likes ON photos.instagram_photo_id = photos_likes.photo 
       WHERE photos.id='${req.params.photoId}' 
-      AND photos_likes.timestamp BETWEEN ${req.query.from} AND ${req.query.to}
+      AND photos_likes.timestamp BETWEEN '${req.query.from}' AND '${req.query.to}'
     ) t
     WHERE t.row % ${req.query.mod || 1} = 0
     LIMIT ${helpers.getLimit(req)}
