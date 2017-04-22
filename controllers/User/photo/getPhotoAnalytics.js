@@ -8,6 +8,7 @@ const getPhotoAnalytics = (req, res) => {
     .where({
       'photos.id': req.params.photoId,
     })
+    .whereBetween('timestamp', helpers.getBetweenDates(req))
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
