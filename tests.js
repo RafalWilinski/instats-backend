@@ -122,7 +122,7 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/photo', () => {
     it('Returns photo analytics with 10 limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=10`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=10&from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)
@@ -135,20 +135,20 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns photo analytics with with maximum limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999&mod=3`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999&mod=3&from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)
         .end((err, data) => {
           if (err) throw new Error(err);
           expect(data.body).to.an('array');
-          expect(data.body.length).to.be.equal(1000);
+          expect(data.body.length).to.be.equal(999);
           done();
         });
     });
 
     it('Returns photo analytics with with default limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)

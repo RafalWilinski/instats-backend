@@ -15,6 +15,7 @@ const getStatsOverTime = (req, res) => {
     .select('*')
     .where(whereClause)
     .whereBetween('timestamp', helpers.getBetweenDates(req))
+    .orderBy('timestamp')
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))
     .then((data) => responses.returnData(data, res))
