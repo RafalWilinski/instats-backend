@@ -20,8 +20,8 @@ const exchangeCodeForToken = (req, res) => {
         .catch((error) => responses.returnStatus('Failed to update access token', 403, res, error));
       }).catch(() => {
       registerUser(body)
-          .then((data) => responses.returnData(data[0], res))
-          .catch((error) => responses.returnStatus('Failed to register user', 500, res, error));
+        .then((data) => responses.returnData(data[0], res))
+        .catch((error) => responses.returnStatus('Failed to register user', 500, res, error));
       });
   }).catch((error) => responses.returnStatus('Instagram API Error', 422, res, error));
 };

@@ -4,6 +4,7 @@ const UserController = require('./controllers/User/index');
 const SmallProfileController = require('./controllers/SmallProfile/index');
 const authMiddleware = require('./controllers/middleware');
 
+router.get('/user', UserController.get);
 router.get('/user/:userId/photos', UserController.getPhotos);
 router.get('/user/:userId/photo/:photoId', UserController.getPhotoAnalytics);
 router.get('/user/:userId/stats', authMiddleware, UserController.getStatsOverTime);

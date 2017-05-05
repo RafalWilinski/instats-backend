@@ -20,7 +20,7 @@ const updateAccessToken = (body) => new Promise((resolve, reject) => {
       return resolve(data);
     })
     .catch((error) => {
-      logger.error('Error while registering new user', {
+      logger.error('Error while updating user', {
         error,
         body
       });

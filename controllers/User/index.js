@@ -1,4 +1,5 @@
 module.exports = {
+  get: require('./get'),
   exchangeCodeForToken: require('./exchangeCodeForToken'),
   getPhotos: require('./photo/getPhotos'),
   getPhotoAnalytics: require('./photo/getPhotoAnalytics'),

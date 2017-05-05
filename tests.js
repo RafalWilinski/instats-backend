@@ -68,6 +68,27 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/stats', () => {
     it('Failes to fetch follows without access token', (done) => {
+      const url = `/api/user`;
+      request(app)
+        .get(url)
+        .expect(422, done);
+    });
+
+    it('Fetches user with correct access_token', (done) => {
+      const url = `/api/user?access_token=${testInstagramAccessToken}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('object');
+          done();
+        });
+    });
+  });
+
+  describe('/api/user/stats', () => {
+    it('Failes to fetch follows without access token', (done) => {
       const url = `/api/user/1/stats`;
       request(app)
         .get(url)
