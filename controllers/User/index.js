@@ -9,4 +9,5 @@ module.exports = {
   getFollowersDelta: require('./getFollowersDelta'),
   getStatsOverTime: require('./getStatsOverTime'),
   registerNotificationsToken: require('./registerNotificationsToken'),
+  reportPremium: require('./reportPremium')
 };
