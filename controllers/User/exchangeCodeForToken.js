@@ -16,7 +16,7 @@ const exchangeCodeForToken = (req, res) => {
 
     isUserRegistered(body.user.id).then((user) => {
       updateAccessToken(body, user)
-        .then((data) => responses.returnData(data, res))
+        .then((data) => responses.returnData(data[0], res))
         .catch((error) => responses.returnStatus('Failed to update access token', 403, res, error));
       }).catch(() => {
       registerUser(body)
