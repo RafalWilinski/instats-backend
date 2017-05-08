@@ -1,5 +1,4 @@
 const postgres = require('../../postgres');
-const logger = require('../../log');
 
 const registerPurchase = (req, res) => {
   if (req.query.cancel == 'true') {
@@ -10,7 +9,7 @@ const registerPurchase = (req, res) => {
       .returning('*')
       .update('is_premium', false)
       .then(() => {
-        return res.send({});
+        return res.send({ isPremium: false });
       })
       .catch((error) => {
         res.status(500);
@@ -36,7 +35,7 @@ const registerPurchase = (req, res) => {
             is_premium: true,
           })
           .then(() => {
-            return res.send({});
+            return res.send({ isPremium: true });
           })
           .catch((error) => {
             res.status(500);
