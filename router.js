@@ -9,7 +9,7 @@ router.get('/user/:userId/photos', UserController.getPhotos);
 router.get('/user/:userId/photo/:photoId', UserController.getPhotoAnalytics);
 router.get('/user/:userId/stats', authMiddleware, UserController.getStatsOverTime);
 router.get('/user/:userId/followers/', UserController.getFollowersDelta);
-router.get('/user/:userId/premium', UserController.premium);
+router.post('/user/:userId/premium', UserController.reportPremium);
 router.post('/user/request_access_token', UserController.exchangeCodeForToken);
 router.post('/user/:userId/notifications_token', UserController.registerNotificationsToken);
 

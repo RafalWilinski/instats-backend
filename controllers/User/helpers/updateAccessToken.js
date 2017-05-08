@@ -10,7 +10,7 @@ const updateAccessToken = (body) => new Promise((resolve, reject) => {
     .returning('*')
     .update({
       last_login: new Date().toUTCString(),
-      access_token: body.access_token
+      access_token: body.access_token,
     })
     .then((data) => {
       logger.info('User info updated', {
