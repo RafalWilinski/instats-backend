@@ -12,7 +12,7 @@ const getPhotoAnalytics = (req, res) => {
     .limit(helpers.getLimit(req))
     .offset(helpers.getOffset(req))
     .join('photos_likes', 'photos.instagram_photo_id', 'photos_likes.photo')
-    .then((data) => responses.returnData(data, res))
+    .then((data) => responses.returnData(data, res));
 
   const query = `SELECT t.* 
     FROM (
