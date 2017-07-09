@@ -5,7 +5,7 @@ const updateAccessToken = require('./helpers/updateAccessToken');
 const registerUser = require('./register');
 
 const exchangeCodeForToken = (req, res) => {
-  if (req.body.code == null) {
+  if (!req.body.hasOwnProperty('code')) {
     return responses.returnStatus('Request code missing', 403, res);
   }
 
