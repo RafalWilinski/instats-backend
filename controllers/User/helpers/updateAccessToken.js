@@ -10,7 +10,7 @@ const updateAccessToken = (body) => new Promise((resolve, reject) => {
     .returning('*')
     .update({
       last_login: new Date().toUTCString(),
-      access_token: body.access_token
+      access_token: body.access_token,
     })
     .then((data) => {
       logger.info('User info updated', {
@@ -20,7 +20,7 @@ const updateAccessToken = (body) => new Promise((resolve, reject) => {
       return resolve(data);
     })
     .catch((error) => {
-      logger.error('Error while registering new user', {
+      logger.error('Error while updating user', {
         error,
         body
       });

@@ -68,6 +68,27 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/stats', () => {
     it('Failes to fetch follows without access token', (done) => {
+      const url = `/api/user`;
+      request(app)
+        .get(url)
+        .expect(422, done);
+    });
+
+    it('Fetches user with correct access_token', (done) => {
+      const url = `/api/user?access_token=${testInstagramAccessToken}`;
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw new Error(err);
+          expect(data.body).to.an('object');
+          done();
+        });
+    });
+  });
+
+  describe('/api/user/stats', () => {
+    it('Failes to fetch follows without access token', (done) => {
       const url = `/api/user/1/stats`;
       request(app)
         .get(url)
@@ -122,7 +143,7 @@ describe('API Integration Tests', () => {
 
   describe('/api/user/photo', () => {
     it('Returns photo analytics with 10 limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=10`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=10&from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)
@@ -135,20 +156,20 @@ describe('API Integration Tests', () => {
     });
 
     it('Returns photo analytics with with maximum limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999&mod=3`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?limit=999&mod=3&from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)
         .end((err, data) => {
           if (err) throw new Error(err);
           expect(data.body).to.an('array');
-          expect(data.body.length).to.be.equal(1000);
+          expect(data.body.length).to.be.equal(999);
           done();
         });
     });
 
     it('Returns photo analytics with with default limit', (done) => {
-      const url = `/api/user/${testId}/photo/${testPhotoId}`;
+      const url = `/api/user/${testId}/photo/${testPhotoId}?from=2016-05-05&to=2017-05-06`;
       request(app)
         .get(url)
         .expect(200)
@@ -236,6 +257,68 @@ describe('API Integration Tests', () => {
           expect(data.body.length).to.be.equal(2);
           done();
         });
+    });
+  });
+
+  describe('/api/user/premium', () => {
+    it('Cancels premium when cancel query param is present', (done) => {
+      const url = `/api/user/${testId}/premium?cancel=true`;
+      request(app)
+        .post(url)
+        .send({})
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw Error(err);
+
+          expect(data.body).to.be.an('object');
+
+          postgres('users')
+            .select('*')
+            .where({
+              id: testId,
+            })
+            .then((data) => {
+              expect(data[0].is_premium).to.be.equal(false);
+              done();
+            })
+            .catch((err) => {
+              throw new Error(err);
+            });
+        })
+    });
+
+    it('Sets premium to true when submitting receipt', (done) => {
+      const url = `/api/user/${testId}/premium`;
+      request(app)
+        .post(url)
+        .send({
+          purchase: {
+            transaction_id: 1,
+            date: new Date(),
+            product_id: 'id',
+            receipt: 'receipt',
+          },
+          user_id: testId,
+        })
+        .expect(200)
+        .end((err, data) => {
+          if (err) throw Error(err);
+
+          expect(data.body).to.be.an('object');
+
+          postgres('users')
+            .select('*')
+            .where({
+              id: testId,
+            })
+            .then((data) => {
+              expect(data[0].is_premium).to.be.equal(true);
+              done();
+            })
+            .catch((err) => {
+              throw new Error(err);
+            });
+        })
     });
   });
 });

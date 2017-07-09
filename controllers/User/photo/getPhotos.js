@@ -8,6 +8,7 @@ const getPhotos = (req, res) => {
     .where({
       user: req.params.userId,
     })
+    .orderBy('created_time')
     .then((photos) => responses.returnData(photos, res))
     .catch((error) => responses.returnStatus('Internal Database Error', 500, res));
 };

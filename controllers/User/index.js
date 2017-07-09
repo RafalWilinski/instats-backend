@@ -1,4 +1,5 @@
 module.exports = {
+  get: require('./get'),
   exchangeCodeForToken: require('./exchangeCodeForToken'),
   getPhotos: require('./photo/getPhotos'),
   getPhotoAnalytics: require('./photo/getPhotoAnalytics'),
@@ -8,4 +9,5 @@ module.exports = {
   getFollowersDelta: require('./getFollowersDelta'),
   getStatsOverTime: require('./getStatsOverTime'),
   registerNotificationsToken: require('./registerNotificationsToken'),
+  reportPremium: require('./reportPremium')
 };
