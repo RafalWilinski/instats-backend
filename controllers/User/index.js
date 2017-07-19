@@ -11,4 +11,5 @@ module.exports = {
   registerNotificationsToken: require('./registerNotificationsToken'),
   reportPremium: require('./reportPremium'),
   getEngagement: require('./engagement'),
+  getFilters: require('./filters'),
 };
